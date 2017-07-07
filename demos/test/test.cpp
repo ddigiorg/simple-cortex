@@ -33,19 +33,47 @@ int main()
 	cp.loadProgramFromSourceFile(cs, kernels_cl);  // change to loadFromSourceFile
 
 	// Setup HTM Region
-	unsigned int numI     = 8; //2500 number of inputs
-	unsigned int numC     = 2; //2048 number of columns
-	unsigned int numNpC   = 2; //40 number of neurons per column
-	unsigned int numDDpN  = 2; //10 number of distal dendrites per neuron
-	unsigned int numDSpDD = 2; //128 number of distal synapses per distal dendrite
+	unsigned int numIn0   = 4;
+	unsigned int numIn1   = 4;
+	unsigned int numN     = 4;
+	unsigned int numSpD0  = 1;
+	unsigned int numSpD1  = 1;
 
-	std::vector<char> inputs0(numI);
-	std::vector<char> inputs1(numI);
+	std::vector<char> inputs00(numIn0);
+	std::vector<char> inputs10(numIn1);
+	std::vector<char> inputs01(numIn0);
+	std::vector<char> inputs11(numIn1);
+	std::vector<char> inputs02(numIn0);
+	std::vector<char> inputs12(numIn1);
+	std::vector<char> inputs03(numIn0);
+	std::vector<char> inputs13(numIn1);
+	std::vector<char> inputs04(numIn0);
+	std::vector<char> inputs14(numIn1);
+	std::vector<char> inputs05(numIn0);
+	std::vector<char> inputs15(numIn1);
+	std::vector<char> inputs06(numIn0);
+	std::vector<char> inputs16(numIn1);
+	std::vector<char> inputs07(numIn0);
+	std::vector<char> inputs17(numIn1);
 
-	inputs0 = {1, 1, 0, 0, 0, 0, 0, 0};
-	inputs1 = {0, 0, 1, 1, 0, 0, 0, 0};
+	inputs00 = {1, 0, 0, 0};
+	inputs10 = {1, 0, 0, 0};
+	inputs01 = {0, 1, 0, 0};
+	inputs11 = {0, 1, 0, 0};
+	inputs02 = {0, 0, 1, 0};
+	inputs12 = {0, 0, 1, 0};
+	inputs03 = {0, 0, 0, 1};
+	inputs13 = {0, 0, 0, 1};
+	inputs04 = {1, 0, 0, 0};
+	inputs14 = {1, 0, 0, 0};
+	inputs05 = {0, 1, 0, 0};
+	inputs15 = {0, 1, 0, 0};
+	inputs06 = {1, 0, 0, 0};
+	inputs16 = {0, 0, 0, 1};
+	inputs07 = {1, 0, 0, 0};
+	inputs17 = {1, 0, 0, 0};
 
-	Region region(cs, cp, rng, numI, numC, numNpC, numDDpN, numDSpDD);
+	Region region(cs, cp, rng, numIn0, numIn1, numN, numSpD0, numSpD1);
 //	region.initSynapsesRandom(cs);
 //	region.initSynapsesTest(cs);
 
@@ -55,8 +83,8 @@ int main()
 	int counter = 0;
 
 	sf::Clock clock;
-	sf::Time spTime;
-	sf::Time tmTime;
+	sf::Time activateTime;
+//	sf::Time tmTime;
 
 	while (!quit)
 	{
@@ -76,29 +104,79 @@ int main()
  
 		if (!pause)
 		{
-			if (counter == 0)
+
+			printf("TEST");
+
+			switch (counter)
 			{
-				region.setInputs(cs, inputs0);
-				counter = 1;
+				case 0:
+					region.setInputs0(cs, inputs00);
+					region.setInputs1(cs, inputs10);
+					region.activate(cs, true);
+					counter++;
+					break;
+
+				case 1:
+					region.setInputs0(cs, inputs01);
+					region.setInputs1(cs, inputs11);
+					region.activate(cs, true);
+					counter++;
+					break;
+
+				case 2:
+					region.setInputs0(cs, inputs02);
+					region.setInputs1(cs, inputs12);
+					region.activate(cs, true);
+					counter++;
+					break;
+
+				case 3:
+					region.setInputs0(cs, inputs03);
+					region.setInputs1(cs, inputs13);
+					region.activate(cs, true);
+					counter++;
+					break;
+
+				case 4:
+					region.setInputs0(cs, inputs04);
+					region.setInputs1(cs, inputs14);
+					region.activate(cs, true);
+					counter++;
+					break;
+
+				case 5:
+					region.setInputs0(cs, inputs05);
+					region.setInputs1(cs, inputs15);
+					region.activate(cs, true);
+					counter++;
+					break;
+
+				case 6:
+					region.setInputs0(cs, inputs06);
+					region.setInputs1(cs, inputs16);
+					region.activate(cs, true);
+					counter++;
+					break;
+
+				case 7:
+					region.setInputs0(cs, inputs07);
+					region.setInputs1(cs, inputs17);
+					region.activate(cs, true);
+					counter++;
+					break;
+
+				default:
+					region.predict(cs);
 			}
-			else
-			{
-				region.setInputs(cs, inputs1);
-				counter = 0;
-			}
 
-			clock.restart();
-			region.sp(cs, true);
-			spTime = clock.getElapsedTime();
+//			clock.restart();
+//			region.activate(cs, true);
+//			activateTime = clock.getElapsedTime();
 
-			clock.restart();
-			region.tm(cs, true);
-			tmTime = clock.getElapsedTime();
-
-			region.print(cs);
-			std::cout << "SP(us): " << spTime.asMicroseconds();
-			std::cout << std::endl << "TM(us): " << tmTime.asMicroseconds();
-			std::cout << std::endl << "Total(us): " << spTime.asMicroseconds() + tmTime.asMicroseconds() << std::endl;
+//			region.print(cs);
+			std::cout << "Activate(us): " << activateTime.asMicroseconds() << std::endl;
+//			std::cout << std::endl << "TM(us): " << tmTime.asMicroseconds();
+//			std::cout << std::endl << "Total(us): " << spTime.asMicroseconds() + tmTime.asMicroseconds() << std::endl;
 
 			window.clear(sf::Color::Black);
 

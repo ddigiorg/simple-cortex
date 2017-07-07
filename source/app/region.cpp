@@ -11,355 +11,288 @@ Region::Region(
 	ComputeSystem &cs,
 	ComputeProgram &cp,
 	std::mt19937 rng,
-	unsigned int numI,
-	unsigned int numC,
-	unsigned int numNpC,
-	unsigned int numDDpN,
-	unsigned int numDSpDD
+	unsigned int numIn0,
+	unsigned int numIn1,
+	unsigned int numN,
+	unsigned int numSpD0,
+	unsigned int numSpD1
 )
 {
 	_rng = rng;
 
 	// Initialize Variables
-	_numI     = static_cast<cl_uint>(numI);
-	_numC     = static_cast<cl_uint>(numC);
-	_numNpC   = static_cast<cl_uint>(numNpC);
-	_numDDpN  = static_cast<cl_uint>(numDDpN);
-	_numDSpDD = static_cast<cl_uint>(numDSpDD);
-	_numAC    = static_cast<cl_uint>(_numC * 0.02);
-	_numN     = static_cast<cl_uint>(_numNpC * numC);
-	_numPDpC  = static_cast<cl_uint>(1);
-	_numPSpPD = static_cast<cl_uint>(_numI / 2);
-	_numPD    = static_cast<cl_uint>(_numPDpC * _numC);
-	_numPSpC  = static_cast<cl_uint>(_numPSpPD * _numPDpC);
-	_numPS    = static_cast<cl_uint>(_numPSpPD * _numPDpC * _numC);
-	_numDDpC  = static_cast<cl_uint>(numDDpN * numNpC);
-	_numDD    = static_cast<cl_uint>(_numDDpN * _numN);
-	_numDSpN  = static_cast<cl_uint>(_numDSpDD * _numDDpN);
-	_numDS    = static_cast<cl_uint>(_numDSpDD * _numDDpN * _numN);
-	_sMaxAddr = static_cast<cl_uint>(65535);
-	_sMaxPerm = static_cast<cl_uint>(99);
-	_dThresh  = static_cast<cl_uint>(1);
-	_sThresh  = static_cast<cl_uint>(30);
-	_sLearn   = static_cast<cl_uint>(5);
+	_numIn0   = static_cast<cl_uint>(numIn0);
+	_numIn1   = static_cast<cl_uint>(numIn1);
+	_numN     = static_cast<cl_uint>(numN);
+	_numAN    = static_cast<cl_uint>(_numN * 0.02);
+	_numSpD0  = static_cast<cl_uint>(numSpD0);
+	_numSpD1  = static_cast<cl_uint>(numSpD1);
+	_numSpN0  = static_cast<cl_uint>(numSpD0 * _numN);
+	_numSpN1  = static_cast<cl_uint>(numSpD1 * _numN);
+	_sPermMax = static_cast<cl_uint>(99);
+	_nThresh  = static_cast<cl_uint>(2); // !!!
+	_dThresh0 = static_cast<cl_uint>(1); // !!!
+	_dThresh1 = static_cast<cl_uint>(1); // !!!
 
-	if (_numAC == 0)
-		_numAC = 1;
+	if (_numAN == 0)
+		_numAN = 1;
 
 	// Initialize Buffers
-	_inputs = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numI);
+	_inputs0 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numIn0);
+	_inputs1 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numIn1);
+	_outputs = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numIn0); // !!!
 	_nActives = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
-	_nWinners = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
-	_nActivesPrev = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
-	_nWinnersPrev = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
-	_pdActives = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numPD);
-	_ddActives = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numDD);
-	_ddLearns  = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numDD);
-	_psPerms = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numPS);
-	_dsPerms = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numDS);
-	_psAddrs = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numPS);
-	_dsAddrs = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numDS);
-	_pdOverlaps = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numPD); // !!!
-	_ddOverlaps = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numDD); // !!!
+	_nPredicts = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
+	_nOverlaps = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
+	_nBoosts = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numN);
+	_sAddrs0 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numSpN0);
+	_sAddrs1 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numSpN1);
+	_sPerms0 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numSpN0);
+	_sPerms1 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numSpN1);
 
 	// Fill Buffers
-	cs.getQueue().enqueueFillBuffer(_inputs, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numI);
-	cs.getQueue().enqueueFillBuffer(_nActives, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
-	cs.getQueue().enqueueFillBuffer(_nWinners, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
-	cs.getQueue().enqueueFillBuffer(_nActivesPrev, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
-	cs.getQueue().enqueueFillBuffer(_nWinnersPrev, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
-	cs.getQueue().enqueueFillBuffer(_pdActives, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numPD);
-	cs.getQueue().enqueueFillBuffer(_ddActives, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numDD);
-	cs.getQueue().enqueueFillBuffer(_ddLearns,  static_cast<cl_char>(0), 0, sizeof(cl_char) * _numDD);
-	cs.getQueue().enqueueFillBuffer(_psPerms, static_cast<cl_char>(_sThresh), 0, sizeof(cl_char) * _numPS);
-	cs.getQueue().enqueueFillBuffer(_dsPerms, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numDS);
-	cs.getQueue().enqueueFillBuffer(_psAddrs, static_cast<cl_ushort>(_sMaxAddr), 0, sizeof(cl_ushort) * _numPS);
-	cs.getQueue().enqueueFillBuffer(_dsAddrs, static_cast<cl_ushort>(_sMaxAddr), 0, sizeof(cl_ushort) * _numDS);
-	cs.getQueue().enqueueFillBuffer(_pdOverlaps, static_cast<cl_ushort>(0), 0, sizeof(cl_ushort) * _numPD);
-	cs.getQueue().enqueueFillBuffer(_ddOverlaps, static_cast<cl_ushort>(0), 0, sizeof(cl_ushort) * _numDD);
+	cs.getQueue().enqueueFillBuffer(_inputs0,   static_cast<cl_char>(0), 0, sizeof(cl_char) * _numIn0);
+	cs.getQueue().enqueueFillBuffer(_inputs1,   static_cast<cl_char>(0), 0, sizeof(cl_char) * _numIn1);
+	cs.getQueue().enqueueFillBuffer(_outputs,   static_cast<cl_char>(0), 0, sizeof(cl_char) * _numIn0); // !!!
+	cs.getQueue().enqueueFillBuffer(_nActives,  static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
+	cs.getQueue().enqueueFillBuffer(_nPredicts, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
+	cs.getQueue().enqueueFillBuffer(_nOverlaps, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
+	cs.getQueue().enqueueFillBuffer(_nBoosts,   static_cast<cl_ushort>(0), 0, sizeof(cl_ushort) * _numN);
+	cs.getQueue().enqueueFillBuffer(_sAddrs0,   static_cast<cl_ushort>(99), 0, sizeof(cl_ushort) * _numSpN0);
+	cs.getQueue().enqueueFillBuffer(_sAddrs1,   static_cast<cl_ushort>(99), 0, sizeof(cl_ushort) * _numSpN1);
+	cs.getQueue().enqueueFillBuffer(_sPerms0,   static_cast<cl_char>(0), 0, sizeof(cl_char) * _numSpN0);
+	cs.getQueue().enqueueFillBuffer(_sPerms1,   static_cast<cl_char>(0), 0, sizeof(cl_char) * _numSpN1);
 
 	// Initialize Kernels
-//	_randomizeAddresses = cl::Kernel(cp.getProgram(), "randomizeAddresses");
-	_activateDendrites = cl::Kernel(cp.getProgram(), "activateDendrites");
-	_learnDendrites = cl::Kernel(cp.getProgram(), "learnDendrites");
-	_setNeuronStates = cl::Kernel(cp.getProgram(), "setNeuronStates");
+	_overlapDendrites = cl::Kernel(cp.getProgram(), "overlapDendrites");
+	_learnSynapses = cl::Kernel(cp.getProgram(), "learnSynapses");
+	_predictNeurons = cl::Kernel(cp.getProgram(), "predictNeurons");
 }
 
-/*
-void Region::initSynapsesTest(ComputeSystem& cs)
+
+void Region::activate(ComputeSystem &cs, bool learn)
 {
-	unsigned short psAddrsVec[] = {0, 1, 4, 7, 5, 3, 2, 1};
-	char psPermsVec[] = {30, 25, 25, 25, 30, 30, 25, 25};
 
-	cs.getQueue().enqueueWriteBuffer(_psAddrs, CL_TRUE, 0, sizeof(cl_ushort) * _numPS, psAddrsVec);
-	cs.getQueue().enqueueWriteBuffer(_psPerms, CL_TRUE, 0, sizeof(cl_char) * _numPS, psPermsVec);
-}
-*/
+//	printf("TEST");
 
-/*
-void Region::initSynapsesRandom(ComputeSystem& cs)
-{
-	std::uniform_int_distribution<int> seedDist(0, 999);
-
-	cl_uint2 seed = {(cl_uint)seedDist(_rng), (cl_uint)seedDist(_rng)};
-
-	std::vector<unsigned short> addrsVec(_numI);
-
-	cl::Buffer addrs = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_short) * _numI);
-
-	for (int i = 0; i < _numI; i++)
-		addrsVec[i] = i;
-
-	cs.getQueue().enqueueWriteBuffer(addrs, CL_TRUE, 0, sizeof(cl_ushort) * _numI, addrsVec.data());
-
-	_randomizeAddresses.setArg(0, _inputs);
-	_randomizeAddresses.setArg(1, addrs);
-	_randomizeAddresses.setArg(2, _psAddrs);
-	_randomizeAddresses.setArg(3, _numI);
-	_randomizeAddresses.setArg(4, _numPSpPD);
-	_randomizeAddresses.setArg(5, seed);
-
-	_range = cl::NDRange(_numPD);
-	cs.getQueue().enqueueNDRangeKernel(_randomizeAddresses, cl::NullRange, _range);
-	cs.getQueue().finish();
-
-}
-*/
-
-void Region::sp(ComputeSystem &cs, bool learn)
-{
-	// Overlap
-	_activateDendrites.setArg(0, _inputs);
-	_activateDendrites.setArg(1, _psAddrs);
-	_activateDendrites.setArg(2, _psPerms);
-	_activateDendrites.setArg(3, _pdOverlaps);
-	_activateDendrites.setArg(4, _pdActives);
-	_activateDendrites.setArg(5, _numPSpPD);
-	_activateDendrites.setArg(6, _sMaxAddr);
-	_activateDendrites.setArg(7, _dThresh);
-	_activateDendrites.setArg(8, _sThresh);
-
-	_range = cl::NDRange(_numPD);
-	cs.getQueue().enqueueNDRangeKernel(_activateDendrites, cl::NullRange, _range);
-	cs.getQueue().finish();
-
-	// Inhibition
-//	std::vector<unsigned short> pdOverlapsVec[_numPD];
-//	std::vector<char> pdActivesVec[_numPD];
-
-//	cs.getQueue().enqueueReadBuffer(_pdOverlaps, CL_TRUE, 0, sizeof(cl_ushort) * _numPD, &pdOverlapsVec, NULL);
-
-
-
-//	cs.getQueue().enqueueWriteBuffer(_pdActives, CL_TRUE, 0, sizeof(cl_char) * _numPD, pdActivesVec);
-
-	// Learning
-	if (learn)
-	{
-		cl::Buffer psPotentials = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numI);
-		cs.getQueue().enqueueCopyBuffer(_inputs, psPotentials, 0, 0, sizeof(cl_char) * _numI);
-
-		std::vector<char> inputsVec(_numI);
-		unsigned int numActiveInputs = 0;
-
-		cs.getQueue().enqueueReadBuffer(_inputs, CL_TRUE, 0, sizeof(cl_char) * _numI, inputsVec.data(), NULL);
-	
-		for (unsigned int i = 0; i < _numI; i++)
-		{
-			if (inputsVec[i] == 1)
-				numActiveInputs++;
-		}
-
-		_learnDendrites.setArg(0, _inputs);
-		_learnDendrites.setArg(1, _psAddrs);
-		_learnDendrites.setArg(2, _psPerms);
-		_learnDendrites.setArg(3, _pdActives);
-		_learnDendrites.setArg(4, psPotentials);
-		_learnDendrites.setArg(5, numActiveInputs);
-		_learnDendrites.setArg(6, _numI);
-		_learnDendrites.setArg(7, _numPSpPD);
-		_learnDendrites.setArg(8, _sMaxAddr);
-		_learnDendrites.setArg(9, _sMaxPerm);
-		_learnDendrites.setArg(10, _sThresh);
-		_learnDendrites.setArg(11, _sLearn);
-
-		_range = cl::NDRange(_numPD);
-		cs.getQueue().enqueueNDRangeKernel(_learnDendrites, cl::NullRange, _range);
-		cs.getQueue().finish();
-	}
-}
-
-void Region::tm(ComputeSystem& cs, bool learn)
-{
-	// Store Current Neuron States to Previous Neuron States
-	cs.getQueue().enqueueCopyBuffer(_nActives, _nActivesPrev, 0, 0, sizeof(cl_char) * _numN);
-	cs.getQueue().enqueueCopyBuffer(_nWinners, _nWinnersPrev, 0, 0, sizeof(cl_char) * _numN);
+	cs.getQueue().enqueueFillBuffer(_nOverlaps, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
 	cs.getQueue().enqueueFillBuffer(_nActives, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
-	cs.getQueue().enqueueFillBuffer(_nWinners, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
 
-	// Set Neuron States
-	cs.getQueue().enqueueCopyBuffer(_ddActives, _ddLearns, 0, 0, sizeof(cl_char) * _numDD);
+	// Overlap Dendrite 0
+	_overlapDendrites.setArg(0, _nOverlaps);
+	_overlapDendrites.setArg(1, _sAddrs0);
+	_overlapDendrites.setArg(2, _sPerms0);
+	_overlapDendrites.setArg(3, _inputs0);
+	_overlapDendrites.setArg(4, _numSpD0);
+	_overlapDendrites.setArg(5, _dThresh0);
 
-	_setNeuronStates.setArg(0, _nActives);
-	_setNeuronStates.setArg(1, _nWinners);
-	_setNeuronStates.setArg(2, _pdActives);
-	_setNeuronStates.setArg(3, _ddActives);
-	_setNeuronStates.setArg(4, _ddLearns);
-	_setNeuronStates.setArg(5, _dsAddrs);
-	_setNeuronStates.setArg(6, _numDDpC);
-	_setNeuronStates.setArg(7, _numNpC);
-	_setNeuronStates.setArg(8, _numDDpN);
-	_setNeuronStates.setArg(9, _numDSpDD);
-	_setNeuronStates.setArg(10, _sMaxAddr);
-
-	_range = cl::NDRange(_numC);
-	cs.getQueue().enqueueNDRangeKernel(_setNeuronStates, cl::NullRange, _range);
+	_range = cl::NDRange(_numN);
+	cs.getQueue().enqueueNDRangeKernel(_overlapDendrites, cl::NullRange, _range);
 	cs.getQueue().finish();
 
-	// Learning
-	if (learn)
+	// Overlap Dendrite 1
+	_overlapDendrites.setArg(0, _nOverlaps);
+	_overlapDendrites.setArg(1, _sAddrs1);
+	_overlapDendrites.setArg(2, _sPerms1);
+	_overlapDendrites.setArg(3, _inputs1);
+	_overlapDendrites.setArg(4, _numSpD1);
+	_overlapDendrites.setArg(5, _dThresh1);
+
+	_range = cl::NDRange(_numN);
+	cs.getQueue().enqueueNDRangeKernel(_overlapDendrites, cl::NullRange, _range);
+	cs.getQueue().finish();
+
+	// Neuron Activation and Inhibition
+	char nActivesArr[_numN];
+	char nOverlapsArr[_numN];
+	unsigned short nBoostsArr[_numN];
+
+	cs.getQueue().enqueueReadBuffer(_nActives, CL_TRUE, 0, sizeof(cl_char) * _numN, &nActivesArr, NULL);
+	cs.getQueue().enqueueReadBuffer(_nOverlaps, CL_TRUE, 0, sizeof(cl_char) * _numN, &nOverlapsArr, NULL);
+	cs.getQueue().enqueueReadBuffer(_nBoosts, CL_TRUE, 0, sizeof(cl_ushort) * _numN, &nBoostsArr, NULL);
+
+	unsigned int an = 0;
+
+	for (unsigned int n = 0; n < _numN; n++)
 	{
-		cl::Buffer dsPotentials = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
-		cs.getQueue().enqueueCopyBuffer(_nWinnersPrev, dsPotentials, 0, 0, sizeof(cl_char) * _numN);
+		nBoostsArr[n]++;
 
-		std::vector<char> nWinnersPrevVec(_numI);
-		unsigned int numWinnersPrev = 0;
+		if (nOverlapsArr[n] >= _nThresh && an <= _numAN)
+		{
+//			printf("TEST");
+			nActivesArr[n] = 1;
+			nBoostsArr[n] = 0;
+			an++;
+		}
+	}
 
-		cs.getQueue().enqueueReadBuffer(_nWinnersPrev, CL_TRUE, 0, sizeof(cl_char) * _numN, nWinnersPrevVec.data(), NULL);
-	
+	for (an; an < _numAN; an++)
+	{
+		unsigned int maxValue = 0;
+		unsigned int maxIndex = 0;
+
+		// get max value
 		for (unsigned int n = 0; n < _numN; n++)
 		{
-			if (nWinnersPrevVec[n] == 1)
-				numWinnersPrev++;
+			if (nBoostsArr[n] > maxValue)
+			{
+				maxValue = nBoostsArr[n];
+				maxIndex = n;
+			}
 		}
 
-		_learnDendrites.setArg(0, _nWinnersPrev);
-		_learnDendrites.setArg(1, _dsAddrs);
-		_learnDendrites.setArg(2, _dsPerms);
-		_learnDendrites.setArg(3, _ddLearns);
-		_learnDendrites.setArg(4, dsPotentials);
-		_learnDendrites.setArg(5, numWinnersPrev);
-		_learnDendrites.setArg(6, _numN);
-		_learnDendrites.setArg(7, _numDSpDD);
-		_learnDendrites.setArg(8, _sMaxAddr);
-		_learnDendrites.setArg(9, _sMaxPerm);
-		_learnDendrites.setArg(10, _sThresh);
-		_learnDendrites.setArg(11, _sLearn);
-
-		_range = cl::NDRange(_numDD);
-		cs.getQueue().enqueueNDRangeKernel(_learnDendrites, cl::NullRange, _range);
-		cs.getQueue().finish();
+		nActivesArr[maxIndex] = 1;
+		nBoostsArr[maxIndex] = 0;
 	}
 
-	//Prediction
-	_activateDendrites.setArg(0, _nActives);
-	_activateDendrites.setArg(1, _dsAddrs);
-	_activateDendrites.setArg(2, _dsPerms);
-	_activateDendrites.setArg(3, _ddOverlaps);
-	_activateDendrites.setArg(4, _ddActives);
-	_activateDendrites.setArg(5, _numDSpDD);
-	_activateDendrites.setArg(6, _sMaxAddr);
-	_activateDendrites.setArg(7, _dThresh);
-	_activateDendrites.setArg(8, _sThresh);
+	cs.getQueue().enqueueWriteBuffer(_nActives, CL_TRUE, 0, sizeof(cl_char) * _numN, nActivesArr);
+	cs.getQueue().enqueueWriteBuffer(_nBoosts, CL_TRUE, 0, sizeof(cl_ushort) * _numN, nBoostsArr);
 
-	_range = cl::NDRange(_numDD);
-	cs.getQueue().enqueueNDRangeKernel(_activateDendrites, cl::NullRange, _range);
+	// Learning
+	if (learn)
+	{
+		_learnSynapses.setArg(0, _sAddrs0);
+		_learnSynapses.setArg(1, _sPerms0);
+		_learnSynapses.setArg(2, _nActives);
+		_learnSynapses.setArg(3, _inputs0);
+		_learnSynapses.setArg(4, _numSpD0);
+		_learnSynapses.setArg(5, _numIn0);
+		_learnSynapses.setArg(6, _sPermMax);
+
+		_range = cl::NDRange(_numN);
+		cs.getQueue().enqueueNDRangeKernel(_learnSynapses, cl::NullRange, _range);
+		cs.getQueue().finish();
+
+		_learnSynapses.setArg(0, _sAddrs1);
+		_learnSynapses.setArg(1, _sPerms1);
+		_learnSynapses.setArg(2, _nActives);
+		_learnSynapses.setArg(3, _inputs1);
+		_learnSynapses.setArg(4, _numSpD1);
+		_learnSynapses.setArg(5, _numIn1);
+		_learnSynapses.setArg(6, _sPermMax);
+
+		_range = cl::NDRange(_numN);
+		cs.getQueue().enqueueNDRangeKernel(_learnSynapses, cl::NullRange, _range);
+		cs.getQueue().finish();
+	}
+}
+
+void Region::predict(ComputeSystem& cs)
+{
+	cs.getQueue().enqueueFillBuffer(_nOverlaps, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
+	cs.getQueue().enqueueFillBuffer(_nPredicts, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
+
+	// Overlap Dendrite 0
+	_overlapDendrites.setArg(0, _nOverlaps);
+	_overlapDendrites.setArg(1, _sAddrs0);
+	_overlapDendrites.setArg(2, _sPerms0);
+	_overlapDendrites.setArg(3, _inputs0);
+	_overlapDendrites.setArg(4, _numSpD0);
+	_overlapDendrites.setArg(5, _dThresh0);
+
+	_range = cl::NDRange(_numN);
+	cs.getQueue().enqueueNDRangeKernel(_overlapDendrites, cl::NullRange, _range);
+	cs.getQueue().finish();
+
+	// Predict Neurons
+	_predictNeurons.setArg(0, _nPredicts);
+	_predictNeurons.setArg(1, _nOverlaps);
+	_predictNeurons.setArg(2, static_cast<cl_uint>(1));
+
+	_range = cl::NDRange(_numN);
+	cs.getQueue().enqueueNDRangeKernel(_predictNeurons, cl::NullRange, _range);
 	cs.getQueue().finish();
 }
 
 void Region::print(ComputeSystem& cs)
 {
-	std::vector<unsigned short> ddOverlapsVec(_numDD);
-	std::vector<char> ddActivesVec(_numDD);
-	std::vector<char> ddLearnsVec(_numDD);
-	std::vector<unsigned short> dsAddrsVec(_numDS);
-	std::vector<char> dsPermsVec(_numDS);
+	std::vector<char> nPredictsVec(_numN);
 	std::vector<char> nActivesVec(_numN);
-	std::vector<char> nWinnersVec(_numN);
-	std::vector<char> nActivesPrevVec(_numN);
-	std::vector<char> nWinnersPrevVec(_numN);
-	std::vector<unsigned short> pdOverlapsVec(_numPD);
-	std::vector<char> pdActivesVec(_numPD);
-	std::vector<unsigned short> psAddrsVec(_numPS);
-	std::vector<char> psPermsVec(_numPS);
-	std::vector<char> inputsVec(_numI);
+	std::vector<unsigned short> nBoostsVec(_numN);
+	std::vector<char> nOverlapsVec(_numN);
+	std::vector<unsigned short> sAddrs0Vec(_numSpN0);
+	std::vector<char> sPerms0Vec(_numSpN0);
+	std::vector<unsigned short> sAddrs1Vec(_numSpN1);
+	std::vector<char> sPerms1Vec(_numSpN1);
+	std::vector<char> inputs0Vec(_numIn0);
+	std::vector<char> inputs1Vec(_numIn1);
+	std::vector<char> outputsVec(_numIn0);
 
-	cs.getQueue().enqueueReadBuffer(_ddOverlaps, CL_TRUE, 0, sizeof(unsigned short) * _numDD, ddOverlapsVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_ddActives, CL_TRUE, 0, sizeof(char) * _numDD, ddActivesVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_ddLearns, CL_TRUE, 0, sizeof(char) * _numDD, ddLearnsVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_dsAddrs, CL_TRUE, 0, sizeof(unsigned short) * _numDS, dsAddrsVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_dsPerms, CL_TRUE, 0, sizeof(char) * _numDS, dsPermsVec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_nPredicts, CL_TRUE, 0, sizeof(char) * _numN, nPredictsVec.data(), NULL);
 	cs.getQueue().enqueueReadBuffer(_nActives, CL_TRUE, 0, sizeof(char) * _numN, nActivesVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_nWinners, CL_TRUE, 0, sizeof(char) * _numN, nWinnersVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_nActivesPrev, CL_TRUE, 0, sizeof(char) * _numN, nActivesPrevVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_nWinnersPrev, CL_TRUE, 0, sizeof(char) * _numN, nWinnersPrevVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_pdOverlaps, CL_TRUE, 0, sizeof(unsigned short) * _numPD, pdOverlapsVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_pdActives, CL_TRUE, 0, sizeof(char) * _numPD, pdActivesVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_psAddrs, CL_TRUE, 0, sizeof(unsigned short) * _numPS, psAddrsVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_psPerms, CL_TRUE, 0, sizeof(char) * _numPS, psPermsVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_inputs, CL_TRUE, 0, sizeof(char) * _numI, inputsVec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_nBoosts, CL_TRUE, 0, sizeof(unsigned short) * _numN, nBoostsVec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_nOverlaps, CL_TRUE, 0, sizeof(char) * _numN, nOverlapsVec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_sAddrs0, CL_TRUE, 0, sizeof(unsigned short) * _numSpN0, sAddrs0Vec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_sPerms0, CL_TRUE, 0, sizeof(char) * _numSpN0, sPerms0Vec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_sAddrs1, CL_TRUE, 0, sizeof(unsigned short) * _numSpN1, sAddrs1Vec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_sPerms1, CL_TRUE, 0, sizeof(char) * _numSpN1, sPerms1Vec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_inputs0, CL_TRUE, 0, sizeof(char) * _numIn0, inputs0Vec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_inputs1, CL_TRUE, 0, sizeof(char) * _numIn1, inputs1Vec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_outputs, CL_TRUE, 0, sizeof(char) * _numIn0, outputsVec.data(), NULL);
 
-	printf("\nDDOVE ");
-	for(int i = 0; i < _numDD; i++){
-		if (ddOverlapsVec[i] < 10){printf("0%i ", ddOverlapsVec[i]);}else{printf("%i ", ddOverlapsVec[i]);}}
+	printf("\nNPRED ");
+	for(int i = 0; i < _numN; i++){if (nPredictsVec[i] < 10){printf("0%i ", nPredictsVec[i]);}else{printf("%i ", nPredictsVec[i]);}}
 
-	printf("\nDDACT ");
-	for(int i = 0; i < _numDD; i++){
-		if (ddActivesVec[i] < 10){printf("0%i ", ddActivesVec[i]);}else{printf("%i ", ddActivesVec[i]);}}
-
-	printf("\nDDLRN ");
-	for(int i = 0; i < _numDD; i++){
-		if (ddLearnsVec[i] < 10){printf("0%i ", ddLearnsVec[i]);}else{printf("%i ", ddLearnsVec[i]);}}
-
-	printf("\nDSADR ");
-	for(int i = 0; i < _numDS; i++){if (dsAddrsVec[i] < 10){printf("0%i ", dsAddrsVec[i]);}else{printf("%i ", dsAddrsVec[i]);}}
-
-	printf("\nDSPER ");
-	for(int i = 0; i < _numDS; i++){if (dsPermsVec[i] < 10){printf("0%i ", dsPermsVec[i]);}else{printf("%i ", dsPermsVec[i]);}}
-
-	printf("\nNACTC ");
+	printf("\nNACTI ");
 	for(int i = 0; i < _numN; i++){if (nActivesVec[i] < 10){printf("0%i ", nActivesVec[i]);}else{printf("%i ", nActivesVec[i]);}}
 
-	printf("\nNWINC ");
-	for(int i = 0; i < _numN; i++){if (nWinnersVec[i] < 10){printf("0%i ", nWinnersVec[i]);}else{printf("%i ", nWinnersVec[i]);}}
+	printf("\nNBOOS ");
+	for(int i = 0; i < _numN; i++){if (nBoostsVec[i] < 10){printf("0%i ", nBoostsVec[i]);}else{printf("%i ", nBoostsVec[i]);}}
 
-	printf("\nNACTP ");
-	for(int i = 0; i < _numN; i++){
-		if (nActivesPrevVec[i] < 10){printf("0%i ", nActivesPrevVec[i]);}else{printf("%i ", nActivesPrevVec[i]);}}
+	printf("\nNOVER ");
+	for(int i = 0; i < _numN; i++){if (nOverlapsVec[i] < 10){printf("0%i ", nOverlapsVec[i]);}else{printf("%i ", nOverlapsVec[i]);}}
 
-	printf("\nNWINP ");
-	for(int i = 0; i < _numN; i++){
-		if (nWinnersPrevVec[i] < 10){printf("0%i ", nWinnersPrevVec[i]);}else{printf("%i ", nWinnersPrevVec[i]);}}
+	printf("\nSADR0 ");
+	for(int i = 0; i < _numSpN0; i++){if (sAddrs0Vec[i] < 10){printf("0%i ", sAddrs0Vec[i]);}else{printf("%i ", sAddrs0Vec[i]);}}
 
-	printf("\nPDOVE ");
-	for(int i = 0; i < _numPD; i++){
-		if (pdOverlapsVec[i] < 10){printf("0%i ", pdOverlapsVec[i]);}else{printf("%i ", pdOverlapsVec[i]);}}
+	printf("\nSPER0 ");
+	for(int i = 0; i < _numSpN0; i++){if (sPerms0Vec[i] < 10){printf("0%i ", sPerms0Vec[i]);}else{printf("%i ", sPerms0Vec[i]);}}
 
-	printf("\nPDACT ");
-	for(int i = 0; i < _numPD; i++){
-		if (pdActivesVec[i] < 10){printf("0%i ", pdActivesVec[i]);}else{printf("%i ", pdActivesVec[i]);}}
+	printf("\nSADR1 ");
+	for(int i = 0; i < _numSpN1; i++){if (sAddrs1Vec[i] < 10){printf("0%i ", sAddrs1Vec[i]);}else{printf("%i ", sAddrs1Vec[i]);}}
 
-	printf("\nPSADR ");
-	for(int i = 0; i < _numPS; i++){if (psAddrsVec[i] < 10){printf("0%i ", psAddrsVec[i]);}else{printf("%i ", psAddrsVec[i]);}}
+	printf("\nSPER1 ");
+	for(int i = 0; i < _numSpN1; i++){if (sPerms1Vec[i] < 10){printf("0%i ", sPerms1Vec[i]);}else{printf("%i ", sPerms1Vec[i]);}}
 
-	printf("\nPSPER ");
-	for(int i = 0; i < _numPS; i++){if (psPermsVec[i] < 10){printf("0%i ", psPermsVec[i]);}else{printf("%i ", psPermsVec[i]);}}
+	printf("\nINPU0 ");
+	for(int i = 0; i < _numIn0; i++){if (inputs0Vec[i] < 10){printf("0%i ", inputs0Vec[i]);}else{printf("%i ", inputs0Vec[i]);}}
 
-	printf("\nINPUT ");
-	for(int i = 0; i < _numI; i++){if (inputsVec[i] < 10){printf("0%i ", inputsVec[i]);}else{printf("%i ", inputsVec[i]);}}
+	printf("\nINPU1 ");
+	for(int i = 0; i < _numIn1; i++){if (inputs1Vec[i] < 10){printf("0%i ", inputs1Vec[i]);}else{printf("%i ", inputs1Vec[i]);}}
+
+	printf("\nOUTPU ");
+	for(int i = 0; i < _numIn0; i++){if (outputsVec[i] < 10){printf("0%i ", outputsVec[i]);}else{printf("%i ", outputsVec[i]);}}
 
 	printf("\n");
 }
 
-void Region::setInputs(ComputeSystem& cs, std::vector<char> inputsVec)
+void Region::setInputs0(ComputeSystem& cs, std::vector<char> vec)
 {
-	cs.getQueue().enqueueWriteBuffer(_inputs, CL_TRUE, 0, sizeof(cl_char) * _numI, inputsVec.data());
+	cs.getQueue().enqueueWriteBuffer(_inputs0, CL_TRUE, 0, sizeof(cl_char) * _numIn0, vec.data());
 }
 
-
-std::vector<char> Region::getInputs(ComputeSystem &cs)
+void Region::setInputs1(ComputeSystem& cs, std::vector<char> vec)
 {
-	std::vector<char> inputsVec(_numI);
-	cs.getQueue().enqueueReadBuffer(_inputs, CL_TRUE, 0, sizeof(cl_char) * _numI, inputsVec.data(), NULL);
-	return inputsVec;
+	cs.getQueue().enqueueWriteBuffer(_inputs1, CL_TRUE, 0, sizeof(cl_char) * _numIn1, vec.data());
+}
+
+std::vector<char> Region::getInputs0(ComputeSystem &cs)
+{
+	std::vector<char> vec(_numIn0);
+	cs.getQueue().enqueueReadBuffer(_inputs0, CL_TRUE, 0, sizeof(cl_char) * _numIn0, vec.data(), NULL);
+	return vec;
+}
+
+std::vector<char> Region::getInputs1(ComputeSystem &cs)
+{
+	std::vector<char> vec(_numIn1);
+	cs.getQueue().enqueueReadBuffer(_inputs1, CL_TRUE, 0, sizeof(cl_char) * _numIn1, vec.data(), NULL);
+	return vec;
+}
+
+std::vector<char> Region::getOutputs(ComputeSystem &cs)
+{
+	std::vector<char> vec(_numIn0);
+	cs.getQueue().enqueueReadBuffer(_outputs, CL_TRUE, 0, sizeof(cl_char) * _numIn0, vec.data(), NULL);
+	return vec;
 }
