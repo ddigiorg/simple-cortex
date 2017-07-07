@@ -6,6 +6,9 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 
 #### Learn Patterns
 
+- sensory patterns
+- motor patterns
+
 #### Learn Sequences
 
 #### Long Term Prediction
