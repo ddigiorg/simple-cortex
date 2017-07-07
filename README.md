@@ -14,7 +14,9 @@ Beyond one time step into the future.
 
 ## Architecture
 
-SC is simply a collection of neurons.  Like HTM Theory, it is modeled pyramidal neurons.  However unlike HTM theory, these neurons are not pre-arranged in minicolumns of shared receptive fields.  Rather the neurons will respond to and learn the receptive field dynamically, allowing for a much more straightforward set of algorithms.
+#### Area
+
+A SC area is a collection of neurons modeled by pyramidal neurons found in HTM Theory and the mammalian neocortex.  However unlike HTM theory, these neurons are not pre-arranged in minicolumns of shared input receptive fields.  Rather the neurons will respond to and learn the receptive fields dynamically, allowing for a much simpler set of algorithms.
 
 #### Neurons
 
