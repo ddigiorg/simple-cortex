@@ -14,6 +14,19 @@
 #include <random>
 #include <iostream>
 
+class Synapses
+{
+	public:
+		cl_uint numIn;
+		cl_uint numSpD;
+		cl_uint numS;
+		cl_uint dThresh;
+
+		cl::Buffer inputs;
+		cl::Buffer addresses;
+		cl::Buffer permenances;
+};
+
 class Region
 {
 public:
@@ -21,11 +34,9 @@ public:
 		ComputeSystem &cs,
 		ComputeProgram &cp,
 		std::mt19937 rng,
-		unsigned int numIn0,
-		unsigned int numIn1,
 		unsigned int numN,
-		unsigned int numSpD0,
-		unsigned int numSpD1
+		std::vector<unsigned int> numIn,
+		std::vector<unsigned int> numSpD
 	);
 
 	void activate(ComputeSystem& cs, bool learn);
@@ -45,14 +56,16 @@ private:
 
 	cl::NDRange _range;
 
+	unsigned int _numDpN;
+
 	cl_uint _numIn0;   // number of inputs
 	cl_uint _numIn1;   // number of inputs
 	cl_uint _numN;     // number of neurons
 	cl_uint _numAN;    // number of active neurons at each time step
 	cl_uint _numSpD0;  // number of synapses per dendrite
 	cl_uint _numSpD1;  // number of synapses per dendrite
-	cl_uint _numSpN0;  // number of synapses per neuron
-	cl_uint _numSpN1;  // number of synapses per neuron
+	cl_uint _numS0;    // number of synapses total
+	cl_uint _numS1;    // number of synapses total
 	cl_uint _sPermMax; // synapse permanence max value
 	cl_uint _nThresh;  // neuron activation threshold
 	cl_uint _dThresh0; // dendrite activation threshold
@@ -69,6 +82,8 @@ private:
 	cl::Buffer _sAddrs1;   // OpenCL buffer of ushorts (values from 0 to 65535)
 	cl::Buffer _sPerms0;   // OpenCL buffer of chars (values from 0 to 99)
 	cl::Buffer _sPerms1;   // OpenCL buffer of chars (values from 0 to 99)
+
+	std::vector<Synapses> _synapses;
 
 	cl::Kernel _overlapDendrites;
 	cl::Kernel _learnSynapses;

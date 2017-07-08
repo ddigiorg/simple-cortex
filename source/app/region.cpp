@@ -11,24 +11,24 @@ Region::Region(
 	ComputeSystem &cs,
 	ComputeProgram &cp,
 	std::mt19937 rng,
-	unsigned int numIn0,
-	unsigned int numIn1,
 	unsigned int numN,
-	unsigned int numSpD0,
-	unsigned int numSpD1
+	std::vector<unsigned int> numIn,
+	std::vector<unsigned int> numSpD
 )
 {
 	_rng = rng;
 
 	// Initialize Variables
-	_numIn0   = static_cast<cl_uint>(numIn0);
-	_numIn1   = static_cast<cl_uint>(numIn1);
+	_numDpN = numSpD.size();
+
+	_numIn0   = static_cast<cl_uint>(numIn[0]);
+	_numIn1   = static_cast<cl_uint>(numIn[1]);
 	_numN     = static_cast<cl_uint>(numN);
 	_numAN    = static_cast<cl_uint>(_numN * 0.02);
-	_numSpD0  = static_cast<cl_uint>(numSpD0);
-	_numSpD1  = static_cast<cl_uint>(numSpD1);
-	_numSpN0  = static_cast<cl_uint>(numSpD0 * _numN);
-	_numSpN1  = static_cast<cl_uint>(numSpD1 * _numN);
+	_numSpD0  = static_cast<cl_uint>(numSpD[0]);
+	_numSpD1  = static_cast<cl_uint>(numSpD[1]);
+	_numS0    = static_cast<cl_uint>(numSpD[0] * _numN);
+	_numS1    = static_cast<cl_uint>(numSpD[1] * _numN);
 	_sPermMax = static_cast<cl_uint>(99);
 	_nThresh  = static_cast<cl_uint>(2); // !!!
 	_dThresh0 = static_cast<cl_uint>(1); // !!!
@@ -45,10 +45,10 @@ Region::Region(
 	_nPredicts = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
 	_nOverlaps = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
 	_nBoosts = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numN);
-	_sAddrs0 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numSpN0);
-	_sAddrs1 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numSpN1);
-	_sPerms0 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numSpN0);
-	_sPerms1 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numSpN1);
+	_sAddrs0 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numS0);
+	_sAddrs1 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numS1);
+	_sPerms0 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numS0);
+	_sPerms1 = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numS1);
 
 	// Fill Buffers
 	cs.getQueue().enqueueFillBuffer(_inputs0,   static_cast<cl_char>(0), 0, sizeof(cl_char) * _numIn0);
@@ -58,10 +58,21 @@ Region::Region(
 	cs.getQueue().enqueueFillBuffer(_nPredicts, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
 	cs.getQueue().enqueueFillBuffer(_nOverlaps, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
 	cs.getQueue().enqueueFillBuffer(_nBoosts,   static_cast<cl_ushort>(0), 0, sizeof(cl_ushort) * _numN);
-	cs.getQueue().enqueueFillBuffer(_sAddrs0,   static_cast<cl_ushort>(99), 0, sizeof(cl_ushort) * _numSpN0);
-	cs.getQueue().enqueueFillBuffer(_sAddrs1,   static_cast<cl_ushort>(99), 0, sizeof(cl_ushort) * _numSpN1);
-	cs.getQueue().enqueueFillBuffer(_sPerms0,   static_cast<cl_char>(0), 0, sizeof(cl_char) * _numSpN0);
-	cs.getQueue().enqueueFillBuffer(_sPerms1,   static_cast<cl_char>(0), 0, sizeof(cl_char) * _numSpN1);
+	cs.getQueue().enqueueFillBuffer(_sAddrs0,   static_cast<cl_ushort>(99), 0, sizeof(cl_ushort) * _numS0);
+	cs.getQueue().enqueueFillBuffer(_sAddrs1,   static_cast<cl_ushort>(99), 0, sizeof(cl_ushort) * _numS1);
+	cs.getQueue().enqueueFillBuffer(_sPerms0,   static_cast<cl_char>(0), 0, sizeof(cl_char) * _numS0);
+	cs.getQueue().enqueueFillBuffer(_sPerms1,   static_cast<cl_char>(0), 0, sizeof(cl_char) * _numS1);
+
+
+	_synapses.resize(_numDpN);
+
+	for (unsigned int d = 0; d < _numDpN; d++)
+	{
+		_synapses[d].numIn   = static_cast<cl_uint>(numIn[d]);
+		_synapses[d].numSpD  = static_cast<cl_uint>(numSpD[d]);
+		_synapses[d].numS    = static_cast<cl_uint>(numSpD[d] * numN);
+		_synapses[d].dThresh = static_cast<cl_uint>(1);
+	}
 
 	// Initialize Kernels
 	_overlapDendrites = cl::Kernel(cp.getProgram(), "overlapDendrites");
@@ -72,9 +83,6 @@ Region::Region(
 
 void Region::activate(ComputeSystem &cs, bool learn)
 {
-
-//	printf("TEST");
-
 	cs.getQueue().enqueueFillBuffer(_nOverlaps, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
 	cs.getQueue().enqueueFillBuffer(_nActives, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
 
@@ -119,7 +127,6 @@ void Region::activate(ComputeSystem &cs, bool learn)
 
 		if (nOverlapsArr[n] >= _nThresh && an <= _numAN)
 		{
-//			printf("TEST");
 			nActivesArr[n] = 1;
 			nBoostsArr[n] = 0;
 			an++;
@@ -210,10 +217,10 @@ void Region::print(ComputeSystem& cs)
 	std::vector<char> nActivesVec(_numN);
 	std::vector<unsigned short> nBoostsVec(_numN);
 	std::vector<char> nOverlapsVec(_numN);
-	std::vector<unsigned short> sAddrs0Vec(_numSpN0);
-	std::vector<char> sPerms0Vec(_numSpN0);
-	std::vector<unsigned short> sAddrs1Vec(_numSpN1);
-	std::vector<char> sPerms1Vec(_numSpN1);
+	std::vector<unsigned short> sAddrs0Vec(_numS0);
+	std::vector<char> sPerms0Vec(_numS0);
+	std::vector<unsigned short> sAddrs1Vec(_numS1);
+	std::vector<char> sPerms1Vec(_numS1);
 	std::vector<char> inputs0Vec(_numIn0);
 	std::vector<char> inputs1Vec(_numIn1);
 	std::vector<char> outputsVec(_numIn0);
@@ -222,10 +229,10 @@ void Region::print(ComputeSystem& cs)
 	cs.getQueue().enqueueReadBuffer(_nActives, CL_TRUE, 0, sizeof(char) * _numN, nActivesVec.data(), NULL);
 	cs.getQueue().enqueueReadBuffer(_nBoosts, CL_TRUE, 0, sizeof(unsigned short) * _numN, nBoostsVec.data(), NULL);
 	cs.getQueue().enqueueReadBuffer(_nOverlaps, CL_TRUE, 0, sizeof(char) * _numN, nOverlapsVec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_sAddrs0, CL_TRUE, 0, sizeof(unsigned short) * _numSpN0, sAddrs0Vec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_sPerms0, CL_TRUE, 0, sizeof(char) * _numSpN0, sPerms0Vec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_sAddrs1, CL_TRUE, 0, sizeof(unsigned short) * _numSpN1, sAddrs1Vec.data(), NULL);
-	cs.getQueue().enqueueReadBuffer(_sPerms1, CL_TRUE, 0, sizeof(char) * _numSpN1, sPerms1Vec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_sAddrs0, CL_TRUE, 0, sizeof(unsigned short) * _numS0, sAddrs0Vec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_sPerms0, CL_TRUE, 0, sizeof(char) * _numS0, sPerms0Vec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_sAddrs1, CL_TRUE, 0, sizeof(unsigned short) * _numS1, sAddrs1Vec.data(), NULL);
+	cs.getQueue().enqueueReadBuffer(_sPerms1, CL_TRUE, 0, sizeof(char) * _numS1, sPerms1Vec.data(), NULL);
 	cs.getQueue().enqueueReadBuffer(_inputs0, CL_TRUE, 0, sizeof(char) * _numIn0, inputs0Vec.data(), NULL);
 	cs.getQueue().enqueueReadBuffer(_inputs1, CL_TRUE, 0, sizeof(char) * _numIn1, inputs1Vec.data(), NULL);
 	cs.getQueue().enqueueReadBuffer(_outputs, CL_TRUE, 0, sizeof(char) * _numIn0, outputsVec.data(), NULL);
@@ -243,16 +250,16 @@ void Region::print(ComputeSystem& cs)
 	for(int i = 0; i < _numN; i++){if (nOverlapsVec[i] < 10){printf("0%i ", nOverlapsVec[i]);}else{printf("%i ", nOverlapsVec[i]);}}
 
 	printf("\nSADR0 ");
-	for(int i = 0; i < _numSpN0; i++){if (sAddrs0Vec[i] < 10){printf("0%i ", sAddrs0Vec[i]);}else{printf("%i ", sAddrs0Vec[i]);}}
+	for(int i = 0; i < _numS0; i++){if (sAddrs0Vec[i] < 10){printf("0%i ", sAddrs0Vec[i]);}else{printf("%i ", sAddrs0Vec[i]);}}
 
 	printf("\nSPER0 ");
-	for(int i = 0; i < _numSpN0; i++){if (sPerms0Vec[i] < 10){printf("0%i ", sPerms0Vec[i]);}else{printf("%i ", sPerms0Vec[i]);}}
+	for(int i = 0; i < _numS0; i++){if (sPerms0Vec[i] < 10){printf("0%i ", sPerms0Vec[i]);}else{printf("%i ", sPerms0Vec[i]);}}
 
 	printf("\nSADR1 ");
-	for(int i = 0; i < _numSpN1; i++){if (sAddrs1Vec[i] < 10){printf("0%i ", sAddrs1Vec[i]);}else{printf("%i ", sAddrs1Vec[i]);}}
+	for(int i = 0; i < _numS1; i++){if (sAddrs1Vec[i] < 10){printf("0%i ", sAddrs1Vec[i]);}else{printf("%i ", sAddrs1Vec[i]);}}
 
 	printf("\nSPER1 ");
-	for(int i = 0; i < _numSpN1; i++){if (sPerms1Vec[i] < 10){printf("0%i ", sPerms1Vec[i]);}else{printf("%i ", sPerms1Vec[i]);}}
+	for(int i = 0; i < _numS1; i++){if (sPerms1Vec[i] < 10){printf("0%i ", sPerms1Vec[i]);}else{printf("%i ", sPerms1Vec[i]);}}
 
 	printf("\nINPU0 ");
 	for(int i = 0; i < _numIn0; i++){if (inputs0Vec[i] < 10){printf("0%i ", inputs0Vec[i]);}else{printf("%i ", inputs0Vec[i]);}}

@@ -27,6 +27,7 @@ kernel void overlapDendrites(
 	}
 }
 
+// Need to figure out how to optimize this algorithm
 kernel void learnSynapses(
 	global ushort* sAddrs,
 	global uchar* sPerms,
@@ -55,7 +56,11 @@ kernel void learnSynapses(
 				else
 					sPerms[s]--;
 			}
-			else
+		}
+
+		for (uint s = s0; s < s0 + numSpD; s++)
+		{
+			if (sPerms[s] == 0)
 			{
 				for (uint i = j; i < numIn; i++)
 				{
@@ -81,6 +86,7 @@ kernel void learnSynapses(
 				}				
 			}
 		}
+
 	}
 }
 

@@ -33,28 +33,33 @@ int main()
 	cp.loadProgramFromSourceFile(cs, kernels_cl);  // change to loadFromSourceFile
 
 	// Setup HTM Region
-	unsigned int numIn0   = 4;
-	unsigned int numIn1   = 4;
-	unsigned int numN     = 4;
-	unsigned int numSpD0  = 1;
-	unsigned int numSpD1  = 1;
+	unsigned int numPatterns = 2;
+	unsigned int numNeurons = 4;
+	std::vector<unsigned int> numIn(numPatterns);
+	std::vector<unsigned int> numSpD(numPatterns);
 
-	std::vector<char> inputs00(numIn0);
-	std::vector<char> inputs10(numIn1);
-	std::vector<char> inputs01(numIn0);
-	std::vector<char> inputs11(numIn1);
-	std::vector<char> inputs02(numIn0);
-	std::vector<char> inputs12(numIn1);
-	std::vector<char> inputs03(numIn0);
-	std::vector<char> inputs13(numIn1);
-	std::vector<char> inputs04(numIn0);
-	std::vector<char> inputs14(numIn1);
-	std::vector<char> inputs05(numIn0);
-	std::vector<char> inputs15(numIn1);
-	std::vector<char> inputs06(numIn0);
-	std::vector<char> inputs16(numIn1);
-	std::vector<char> inputs07(numIn0);
-	std::vector<char> inputs17(numIn1);
+	numIn = {4, 4};
+	numSpD = {1, 1};
+
+	Region region(cs, cp, rng, numNeurons, numIn, numSpD);
+
+	// Input vars
+	std::vector<char> inputs00(numIn[0]);
+	std::vector<char> inputs10(numIn[1]);
+	std::vector<char> inputs01(numIn[0]);
+	std::vector<char> inputs11(numIn[1]);
+	std::vector<char> inputs02(numIn[0]);
+	std::vector<char> inputs12(numIn[1]);
+	std::vector<char> inputs03(numIn[0]);
+	std::vector<char> inputs13(numIn[1]);
+	std::vector<char> inputs04(numIn[0]);
+	std::vector<char> inputs14(numIn[1]);
+	std::vector<char> inputs05(numIn[0]);
+	std::vector<char> inputs15(numIn[1]);
+	std::vector<char> inputs06(numIn[0]);
+	std::vector<char> inputs16(numIn[1]);
+	std::vector<char> inputs07(numIn[0]);
+	std::vector<char> inputs17(numIn[1]);
 
 	inputs00 = {1, 0, 0, 0};
 	inputs10 = {1, 0, 0, 0};
@@ -72,10 +77,6 @@ int main()
 	inputs16 = {0, 0, 0, 1};
 	inputs07 = {1, 0, 0, 0};
 	inputs17 = {1, 0, 0, 0};
-
-	Region region(cs, cp, rng, numIn0, numIn1, numN, numSpD0, numSpD1);
-//	region.initSynapsesRandom(cs);
-//	region.initSynapsesTest(cs);
 
 	// Loop
 	bool quit = false;
@@ -104,9 +105,6 @@ int main()
  
 		if (!pause)
 		{
-
-			printf("TEST");
-
 			switch (counter)
 			{
 				case 0:
@@ -169,12 +167,14 @@ int main()
 					region.predict(cs);
 			}
 
+			region.print(cs);
+
 //			clock.restart();
 //			region.activate(cs, true);
 //			activateTime = clock.getElapsedTime();
 
 //			region.print(cs);
-			std::cout << "Activate(us): " << activateTime.asMicroseconds() << std::endl;
+//			std::cout << "Activate(us): " << activateTime.asMicroseconds() << std::endl;
 //			std::cout << std::endl << "TM(us): " << tmTime.asMicroseconds();
 //			std::cout << std::endl << "Total(us): " << spTime.asMicroseconds() + tmTime.asMicroseconds() << std::endl;
 
