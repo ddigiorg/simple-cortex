@@ -71,26 +71,6 @@ namespace utils
 		float ran = (float) rand() / RAND_MAX;
 		return min + (max - min) * ran;
 	}
-
-//	inline cl::Buffer createBuffer(ComputeSystem &cs, 
-//	{
-//		return cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, 
-//	}
-
-	inline cl::Image1D createImage1D(ComputeSystem &cs, cl_int  size, cl_channel_order channelOrder, cl_channel_type channelType)
-	{	
-		return cl::Image1D(cs.getContext(), CL_MEM_READ_WRITE, cl::ImageFormat(channelOrder, channelType), size);
-	}
-
-	inline cl::Image2D createImage2D(ComputeSystem &cs, cl_int2 size, cl_channel_order channelOrder, cl_channel_type channelType)
-	{	
-		return cl::Image2D(cs.getContext(), CL_MEM_READ_WRITE, cl::ImageFormat(channelOrder, channelType), size.x, size.y);
-	}
-
-	inline cl::Image3D createImage3D(ComputeSystem &cs, cl_int3 size, cl_channel_order channelOrder, cl_channel_type channelType)
-	{
-		return cl::Image3D(cs.getContext(), CL_MEM_READ_WRITE, cl::ImageFormat(channelOrder, channelType), size.x, size.y, size.z);
-	}
 }
 
 #endif

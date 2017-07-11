@@ -1,5 +1,4 @@
-// ========
-// test.cpp
+
 // ========
 
 #include "utils/render2d.h"
@@ -32,16 +31,16 @@ int main()
 	//cs.printCLInfo();
 	cp.loadProgramFromSourceFile(cs, kernels_cl);  // change to loadFromSourceFile
 
-	// Setup HTM Region
-	unsigned int numPatterns = 2;
-	unsigned int numNeurons = 4;
-	std::vector<unsigned int> numIn(numPatterns);
-	std::vector<unsigned int> numSpD(numPatterns);
+	// Setup Simple Cortex area
+	unsigned int numN   = 4; // number of neurons
+	unsigned int numDpN = 2; // number of dendrites per neuron
+	std::vector<unsigned int> numIn(numDpN);
+	std::vector<unsigned int> numSpD(numDpN);
 
 	numIn = {4, 4};
 	numSpD = {1, 1};
 
-	Region region(cs, cp, rng, numNeurons, numIn, numSpD);
+	Region region(cs, cp, rng, numN, numIn, numSpD);
 
 	// Input vars
 	std::vector<char> inputs00(numIn[0]);
@@ -108,57 +107,69 @@ int main()
 			switch (counter)
 			{
 				case 0:
-					region.setInputs0(cs, inputs00);
-					region.setInputs1(cs, inputs10);
+					region.copyNeuronsToInputs(cs, 0);
+//					region.setInputs(cs, 0, inputs00);
+					region.setInputs(cs, 1, inputs10);
 					region.activate(cs, true);
 					counter++;
 					break;
 
 				case 1:
-					region.setInputs0(cs, inputs01);
-					region.setInputs1(cs, inputs11);
+					region.copyNeuronsToInputs(cs, 0);
+//					region.setInputs(cs, 0, inputs01);
+//					region.setInputs(cs, 1, inputs11);
+					region.setInputs(cs, 1, inputs10);
 					region.activate(cs, true);
 					counter++;
 					break;
 
 				case 2:
-					region.setInputs0(cs, inputs02);
-					region.setInputs1(cs, inputs12);
+					region.copyNeuronsToInputs(cs, 0);
+//					region.setInputs(cs, 0, inputs02);
+//					region.setInputs(cs, 1, inputs12);
+					region.setInputs(cs, 1, inputs10);
 					region.activate(cs, true);
 					counter++;
 					break;
 
 				case 3:
-					region.setInputs0(cs, inputs03);
-					region.setInputs1(cs, inputs13);
+					region.copyNeuronsToInputs(cs, 0);
+//					region.setInputs(cs, 0, inputs03);
+//					region.setInputs(cs, 1, inputs13);
+					region.setInputs(cs, 1, inputs10);
 					region.activate(cs, true);
 					counter++;
 					break;
 
 				case 4:
-					region.setInputs0(cs, inputs04);
-					region.setInputs1(cs, inputs14);
+					region.copyNeuronsToInputs(cs, 0);
+//					region.setInputs(cs, 0, inputs04);
+//					region.setInputs(cs, 1, inputs14);
+					region.setInputs(cs, 1, inputs10);
 					region.activate(cs, true);
 					counter++;
 					break;
 
 				case 5:
-					region.setInputs0(cs, inputs05);
-					region.setInputs1(cs, inputs15);
+					region.copyNeuronsToInputs(cs, 0);
+//					region.setInputs(cs, 0, inputs05);
+					region.setInputs(cs, 1, inputs15);
 					region.activate(cs, true);
 					counter++;
 					break;
 
 				case 6:
-					region.setInputs0(cs, inputs06);
-					region.setInputs1(cs, inputs16);
+					region.copyNeuronsToInputs(cs, 0);
+//					region.setInputs(cs, 0, inputs06);
+					region.setInputs(cs, 1, inputs16);
 					region.activate(cs, true);
 					counter++;
 					break;
 
 				case 7:
-					region.setInputs0(cs, inputs07);
-					region.setInputs1(cs, inputs17);
+					region.copyNeuronsToInputs(cs, 0);
+//					region.setInputs(cs, 0, inputs07);
+					region.setInputs(cs, 1, inputs17);
 					region.activate(cs, true);
 					counter++;
 					break;

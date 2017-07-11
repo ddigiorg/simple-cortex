@@ -7,7 +7,7 @@ EXECUTE = execute.exe
 
 all: $(EXECUTE)
 
-OBJS_E = test.o region.o compute-system.o compute-program.o
+OBJS_E = ball.o region.o compute-system.o compute-program.o
 $(EXECUTE): $(OBJS_E)
 	$(CXX) $(LDLIBS) $(OBJS_E) -o $(EXECUTE)
 
@@ -16,8 +16,11 @@ $(EXECUTE): $(OBJS_E)
 # ==========
 PATH_D = ./demos/
 
-test.o: $(PATH_D)test/test.cpp
-	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_D)test/test.cpp
+#test.o: $(PATH_D)test/test.cpp
+#	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_D)test/test.cpp
+
+ball.o: $(PATH_D)ball/ball.cpp
+	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_D)ball/ball.cpp
 
 # ==========
 # App

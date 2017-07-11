@@ -35,7 +35,32 @@ public:
 		}
 	}
 
-	void setPixelData (char color, bool transparancy, std::vector<float> imageData)
+	void setPixelsFromBinaryVector (char color, bool transparancy, std::vector<char> binaryVec)
+	{
+		for (int p = 0; p < _numPixels; p++)
+		{
+			if (!(transparancy && binaryVec[p] == 0))
+			{
+				switch(color)
+				{
+					case 'r':
+						_rData[p] = (float)binaryVec[p];
+						break;
+
+					case 'g':
+						_gData[p] = (float)binaryVec[p];
+						break;
+
+					case 'b':
+						_bData[p] = (float)binaryVec[p];
+						break;
+				}
+			}
+		}
+	}
+
+	/*
+	void setPixels (char color, bool transparancy, std::vector<float> imageData)
 	{
 		for (int p = 0; p < _numPixels; p++)
 		{
@@ -58,6 +83,7 @@ public:
 			}
 		}
 	}
+	*/
 
 	void setPosition(utils::Vec2i position)
 	{   

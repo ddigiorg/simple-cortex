@@ -91,12 +91,23 @@ kernel void learnSynapses(
 }
 
 kernel void predictNeurons(
-	global ushort* nPredicts,
-	global ushort* nOverlaps,
+	global uchar* nPredicts,
+	global uchar* nOverlaps,
 	uint nPredThresh)
 {
 	uint n = get_global_id(0);
 
 	if (nOverlaps[n] >= nPredThresh)
 		nPredicts[n] = 1;
+}
+
+kernel void decodeNeurons(
+	global uchar* outputs,
+	global uchar* nPredicts,
+	global ushort* sAddrs)
+{
+	uint n = get_global_id(0);
+
+	if (nPredicts[n] > 0)
+		outputs[sAddrs[n]] = 1;
 }
