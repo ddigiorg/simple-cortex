@@ -90,14 +90,37 @@ kernel void learnSynapses(
 	}
 }
 
-kernel void predictNeurons(
-	global uchar* nPredicts,
+kernel void activateNeurons(
+	global ushort* nBoosts,
+	global uchar* nWinners,
+	global uchar* nActives,
 	global uchar* nOverlaps,
-	uint nPredThresh)
+	global uchar* inhibitFlag,
+	uint nActThresh)
 {
 	uint n = get_global_id(0);
 
-	if (nOverlaps[n] >= nPredThresh)
+	nBoosts[n]++;
+
+	if (nOverlaps[n] >= 1)
+		nActives[n] = 1;
+
+	if (nOverlaps[n] >= nActThresh)
+	{
+		nWinners[n] = 1;
+		nBoosts[n] = 0;
+		inhibitFlag[0] = 1;
+	}
+}
+
+kernel void predictNeurons(
+	global uchar* nPredicts,
+	global uchar* nOverlaps,
+	uint nPreThresh)
+{
+	uint n = get_global_id(0);
+
+	if (nOverlaps[n] >= nPreThresh)
 		nPredicts[n] = 1;
 }
 

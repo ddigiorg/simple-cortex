@@ -20,7 +20,7 @@ int main()
 	std::mt19937 rng(time(nullptr)); 
 	srand(time(NULL)); 
 
-	int scale = 10;
+	int scale = 20;
 
 	utils::Vec2i sizeScene(21, 21);
 	utils::Vec2i sizeDisplay(sizeScene.x * scale, sizeScene.y * scale);
@@ -46,15 +46,26 @@ int main()
 
 	// Setup Simple Cortex area
 	unsigned int numPixels = sizeScene.x * sizeScene.y;
-	unsigned int numN   = 100; // number of neurons
-	unsigned int numDpN = 2; // number of dendrites per neuron
-	std::vector<unsigned int> numIn(numDpN);
-	std::vector<unsigned int> numSpD(numDpN);
+	unsigned int numN = 20; // number of neurons
 
-	numIn  = {numPixels, numN};
-	numSpD = {1, 1};
+	std::vector<unsigned int> numVperP(4); // 4 patterns
+	std::vector<unsigned int> numSperD(2); // 2 dendrites (per neuron)
 
-	Region region(cs, cp, rng, numN, numIn, numSpD);
+	numVperP = {numPixels,  // input - current scene state
+                numN,       // input - previous active neurons
+                numN,       // input - previous winner neurons
+                numPixels}; // output - predicted future scene state
+
+	numSperD = {1,  // stores current active scene state values
+                1}; // stores previous winner neurons
+
+	Region region(cs, cp, rng, numN, numVperP, numSperD);
+
+	std::vector<unsigned int> pEncode(2);
+	std::vector<unsigned int> pLearn(2);
+
+	pEncode = {0, 1};
+	pLearn = {0, 2};
 
 	// Loop
 	bool quit = false;
@@ -85,18 +96,12 @@ int main()
 		{
 			ball.step();
 
-//			if (counter == 4)
-//			{
-//				printf("TEST\n");
-//				counter = 1;
-//			}
-//			else
-//				counter++;		
+			region.setPattern(cs, 0, ball.getBinaryVector());
+			region.copyActiveNeuronsToPattern(cs, 1);
+			region.copyWinnerNeuronsToPattern(cs, 2);
 
-			region.setInputs(cs, 0, ball.getBinaryVector());
-			region.copyNeuronsToInputs(cs, 1);
-
-			region.encode(cs, true);
+			region.encode(cs, pEncode);
+			region.learn(cs, pLearn);
 			region.predict(cs);
 			region.decode(cs);
 
@@ -104,7 +109,7 @@ int main()
 //			region.activate(cs, true);
 //			activateTime = clock.getElapsedTime();
 
-//			region.print(cs);
+			region.print(cs);
 
 //			std::cout << "Activate(us): " << activateTime.asMicroseconds() << std::endl;
 //			std::cout << std::endl << "TM(us): " << tmTime.asMicroseconds();
@@ -113,7 +118,7 @@ int main()
 			window.clear(sf::Color::Black);
 
 			scene.setPixelsFromBinaryVector('g', false, ball.getBinaryVector());
-			scene.setPixelsFromBinaryVector('b', false, region.getOutputs(cs));
+			scene.setPixelsFromBinaryVector('b', false, region.getPattern(cs, 3));
 
 			window.draw(scene.getSprite());
 

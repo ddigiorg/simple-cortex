@@ -14,17 +14,29 @@
 #include <random>
 #include <iostream>
 
-class Synapses
+// v V Value
+// p P Pattern
+// s S Synapse
+// d D Dendrite
+// n N Neuron
+
+class Pattern
 {
 	public:
-		cl_uint numIn;     // number of inputs
-		cl_uint numSpD;    // number of synapses per dendrite
-		cl_uint numS;      // number of synapses
-		cl_uint dThresh;   // dendrite activation threshold
+		cl_uint numV; // number of values
 
-		cl::Buffer inputs; // OpenCL buffer of chars (values from 0 to 1)
-		cl::Buffer addrs;  // OpenCL buffer of ushorts (values from 0 to 65535)
-		cl::Buffer perms;  // OpenCL buffer of chars (values from 0 to 99)
+		cl::Buffer values; // OpenCL buffer of chars (values from 0 to 1)
+};
+
+class Dendrite
+{
+	public:
+		cl_uint numSperD; // number of synapses per dendrite
+		cl_uint numS;     // number of synapses
+		cl_uint dThresh;  // dendrite activation threshold
+
+		cl::Buffer sAddrs; // OpenCL buffer of ushorts (values from 0 to 65535)
+		cl::Buffer sPerms; // OpenCL buffer of chars (values from 0 to 99)
 };
 
 class Region
@@ -35,48 +47,55 @@ public:
 		ComputeProgram &cp,
 		std::mt19937 rng,
 		unsigned int numN,
-		std::vector<unsigned int> numIn,
-		std::vector<unsigned int> numSpD
+		std::vector<unsigned int> numVperP, // number of values per pattern
+		std::vector<unsigned int> numSperD  // number of synapses per dendrite
 	);
 
-	void encode(ComputeSystem& cs, bool learn);
+	void encode(ComputeSystem& cs, std::vector <unsigned int> pEncode);
+	void learn(ComputeSystem& cs, std::vector<unsigned int> pLearn);
 	void predict(ComputeSystem& cs);
 	void decode(ComputeSystem& cs);
 
 	void print(ComputeSystem& cs);
 
-	void setInputs(ComputeSystem& cs, unsigned int d, std::vector<char> vec);
+	void setPattern(ComputeSystem& cs, unsigned int p, std::vector<char> vec);
+//	void copyInputsToInputs(ComputeSystem& cs, unsigned int dFrom, unsigned int dTo);
+	void copyActiveNeuronsToPattern(ComputeSystem& cs, unsigned int p);
+	void copyWinnerNeuronsToPattern(ComputeSystem& cs, unsigned int p);
 
-	void copyInputsToInputs(ComputeSystem& cs, unsigned int dFrom, unsigned int dTo);
-	void copyNeuronsToInputs(ComputeSystem& cs, unsigned int d);
-
-	std::vector<char> getInputs(ComputeSystem &cs, unsigned int d);
-	std::vector<char> getOutputs(ComputeSystem &cs);
+	std::vector<char> getPattern(ComputeSystem &cs, unsigned int d);
 
 private:
 	std::mt19937 _rng;
 
 	cl::NDRange _range;
 
-	cl_uint _numN;       // number of neurons
-	cl_uint _numAN;      // number of active neurons at each time step
-	cl_uint _numDpN;     // number of dendrites per neuron
+	cl_uint _numN;       // number of neurons per area
+	cl_uint _numW;       // number of winner neurons during one time step
+	cl_uint _numP;       // number of patterns per area
+	cl_uint _numDperN;   // number of dendrites per neuron
 	cl_uint _nActThresh; // neuron activation threshold
 	cl_uint _nPreThresh; // neuron prediction threshold
 	cl_uint _sPermMax;   // synapse permanence max value (99)
 	cl_uint _sAddrMax;   // synapse address max value (65535)
 
-	cl::Buffer _outputs;   // OpenCL buffer of chars (values from 0 to 1)
+	cl::Buffer _inhibitFlag;
+
+	cl::Buffer _nBoosts;   // OpenCL buffer of ushorts (values from 0 to 65535)
 	cl::Buffer _nPredicts; // OpenCL buffer of chars (values from 0 to 1)
-	cl::Buffer _nLearns;   // OpenCL buffer of chars (values from 0 to 1)
+	cl::Buffer _nWinners;  // OpenCL buffer of chars (values from 0 to 1)
 	cl::Buffer _nActives;  // OpenCL buffer of chars (values from 0 to 1)
 	cl::Buffer _nOverlaps; // OpenCL buffer of chars (values from 0 to 255)
-	cl::Buffer _nBoosts;   // OpenCL buffer of ushorts (values from 0 to 65535)
 
-	std::vector<Synapses> _dendrites;
+	cl::Buffer _DOVE0;
+	cl::Buffer _DOVE1;
+
+	std::vector<Pattern> _patterns;
+	std::vector<Dendrite> _dendrites;
 
 	cl::Kernel _overlapDendrites;
 	cl::Kernel _learnSynapses;
+	cl::Kernel _activateNeurons;
 	cl::Kernel _predictNeurons;
 	cl::Kernel _decodeNeurons;
 };

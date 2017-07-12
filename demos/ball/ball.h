@@ -17,7 +17,6 @@ public:
 	{
 		_sizeScene = sizeScene;
 
-//		_pixels.resize(_sizeScene.x * _sizeScene.y);
 		_binaryVec.resize(_sizeScene.x * _sizeScene.y);
 
 		_resetFlag = true;
@@ -28,10 +27,14 @@ public:
 		if (_resetFlag)
 		{
 			reset();
+//			resetRandom();
+//			resetRandomSimple();
+
 		}
 		else
 		{
-			computeSimplePhysics();
+//			computeSimplePhysics();
+			computeNewtonianPhysics();
 		}
 
 		setBinaryVector();
@@ -59,11 +62,33 @@ private:
 
 	void reset()
 	{
+		_position.x = _sizeScene.x / 2; //0
+		_position.y = _sizeScene.y / 2; //0
+
+		_velocity.x = 0.0f;
+		_velocity.y = 0.0f; //1.0f
+
+		_resetFlag = false;
+	}
+
+	void resetRandom()
+	{
+		_position.x = (int)(utils::getRandomFloat(2.0f, (float)_sizeScene.x - 2.0f));
+		_position.y = (int)(utils::getRandomFloat(2.0f, (float)_sizeScene.y - 2.0f));
+
+		_velocity.x = (int)(2.0f - utils::getRandomFloat(0.0f, 4.0f));
+		_velocity.y = (int)(2.0f - utils::getRandomFloat(0.0f, 4.0f));
+
+		_resetFlag = false;
+	}
+
+	void resetRandomSimple()
+	{
 		_position.x = _sizeScene.x / 2;
 		_position.y = _sizeScene.y / 2;
 
-		_velocity.x = 0.0f;
-		_velocity.y = 1.0f;
+		_velocity.x = (int)(2.0f - utils::getRandomFloat(0.0f, 4.0f));
+		_velocity.y = (int)(2.0f - utils::getRandomFloat(0.0f, 4.0f));
 
 		_resetFlag = false;
 	}
@@ -74,7 +99,7 @@ private:
 		_position.y += _velocity.y;
 
 		bool boundaryUpper = _position.y <= 0.0f;
-		bool boundaryLower = _position.y >= _sizeScene.y - 1.0f; //13
+		bool boundaryLower = _position.y >= _sizeScene.y - 1.0f; //2
 		bool boundaryLeft  = _position.x <=  0.0f;
 		bool boundaryRight = _position.x >= _sizeScene.x - 1.0f;
 
@@ -111,7 +136,7 @@ private:
 			float vSquaredX = _velocity.x * _velocity.x;
 			float vSquaredY = _velocity.y * _velocity.y;
 
-			if (vSquaredX + vSquaredY < 0.2f)
+			if (vSquaredX + vSquaredY < 0.25f)
 				_resetFlag = true;
 		}
 
@@ -147,28 +172,6 @@ private:
 			}
 		}
 	}
-
-	/*
-	void setPixels()
-	{
-		for (int y = 0; y < _sizeScene.y; y++)
-		{
-			for (int x = 0; x < _sizeScene.x; x++)
-			{
-				int i = x + _sizeScene.x * y;
-
-				float value;
-
-				if (x == (int)_position.x && y == (int)_position.y)
-					value = 1.0f;
-				else
-					value = 0.0f;
-
-				_pixels[i] = value;
-			}
-		}
-	}
-	*/
 };
 
 #endif
