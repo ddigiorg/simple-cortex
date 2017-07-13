@@ -100,7 +100,8 @@ kernel void activateNeurons(
 {
 	uint n = get_global_id(0);
 
-	nBoosts[n]++;
+	if (nBoosts[n] < 65535) //!!!!!!!!!!!
+		nBoosts[n]++;
 
 	if (nOverlaps[n] >= 1)
 		nActives[n] = 1;

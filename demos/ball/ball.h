@@ -26,15 +26,15 @@ public:
 	{
 		if (_resetFlag)
 		{
-			reset();
+//			reset();
 //			resetRandom();
-//			resetRandomSimple();
+			resetRandomSimple();
 
 		}
 		else
 		{
-//			computeSimplePhysics();
-			computeNewtonianPhysics();
+			computeSimplePhysics();
+//			computeNewtonianPhysics();
 		}
 
 		setBinaryVector();
@@ -62,11 +62,11 @@ private:
 
 	void reset()
 	{
-		_position.x = _sizeScene.x / 2; //0
-		_position.y = _sizeScene.y / 2; //0
+		_position.x = _sizeScene.x / 2;
+		_position.y = _sizeScene.y / 2;
 
 		_velocity.x = 0.0f;
-		_velocity.y = 0.0f; //1.0f
+		_velocity.y = 0.0f;
 
 		_resetFlag = false;
 	}
@@ -84,17 +84,48 @@ private:
 
 	void resetRandomSimple()
 	{
-		_position.x = _sizeScene.x / 2;
-		_position.y = _sizeScene.y / 2;
+		float temp = utils::getRandomFloat(-1.0f, 1.0f);
 
-		_velocity.x = (int)(2.0f - utils::getRandomFloat(0.0f, 4.0f));
-		_velocity.y = (int)(2.0f - utils::getRandomFloat(0.0f, 4.0f));
+		if (temp < 0)
+			counter = 0;
+		else
+			counter = 1;
+
+		if (counter == 0)
+		{
+			_position.x = 2.0f;
+			_position.y = 5.0f;
+
+			_velocity.x = 0.0f;
+			_velocity.y = 1.0f;
+
+//			counter++;
+		}
+		else
+		{
+			_position.x = 6.0f;
+			_position.y = 5.0f;
+
+			_velocity.x = 0.0f;
+			_velocity.y = 1.0f;
+
+//			counter = 0;
+		}
+
+//		_position.x = (int)(utils::getRandomFloat(0.0f, (float)_sizeScene.x));
+//		_position.y = (int)(utils::getRandomFloat(0.0f, (float)_sizeScene.y));
+
+//		_velocity.x = (int)(1.0f - utils::getRandomFloat(0.0f, 2.0f));
+//		_velocity.y = (int)(1.0f - utils::getRandomFloat(0.0f, 2.0f));
 
 		_resetFlag = false;
 	}
 
 	void computeSimplePhysics()
 	{
+		if (_velocity.y == 0.0f)
+			_velocity.y = 1.0f;
+
 		_position.x += _velocity.x;
 		_position.y += _velocity.y;
 

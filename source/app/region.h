@@ -64,6 +64,8 @@ public:
 	void copyWinnerNeuronsToPattern(ComputeSystem& cs, unsigned int p);
 
 	std::vector<char> getPattern(ComputeSystem &cs, unsigned int d);
+	std::vector<char> getGoodPrediction(ComputeSystem &cs);
+	std::vector<char> getBadPrediction(ComputeSystem &cs);
 
 private:
 	std::mt19937 _rng;
@@ -87,8 +89,12 @@ private:
 	cl::Buffer _nActives;  // OpenCL buffer of chars (values from 0 to 1)
 	cl::Buffer _nOverlaps; // OpenCL buffer of chars (values from 0 to 255)
 
+	cl::Buffer _preOverlaps;
 	cl::Buffer _DOVE0;
 	cl::Buffer _DOVE1;
+
+	cl::Buffer _goodPredictions;
+	cl::Buffer _badPredictions;
 
 	std::vector<Pattern> _patterns;
 	std::vector<Dendrite> _dendrites;

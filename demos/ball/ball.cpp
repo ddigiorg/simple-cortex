@@ -22,7 +22,7 @@ int main()
 
 	int scale = 20;
 
-	utils::Vec2i sizeScene(21, 21);
+	utils::Vec2i sizeScene(11, 11);
 	utils::Vec2i sizeDisplay(sizeScene.x * scale, sizeScene.y * scale);
 
 	// Setup SFML render window
@@ -46,7 +46,7 @@ int main()
 
 	// Setup Simple Cortex area
 	unsigned int numPixels = sizeScene.x * sizeScene.y;
-	unsigned int numN = 20; // number of neurons
+	unsigned int numN = 50; // number of neurons
 
 	std::vector<unsigned int> numVperP(4); // 4 patterns
 	std::vector<unsigned int> numSperD(2); // 2 dendrites (per neuron)
@@ -117,7 +117,9 @@ int main()
 
 			window.clear(sf::Color::Black);
 
-			scene.setPixelsFromBinaryVector('g', false, ball.getBinaryVector());
+//			scene.setPixelsFromBinaryVector('g', false, ball.getBinaryVector());
+			scene.setPixelsFromBinaryVector('g', false, region.getGoodPrediction(cs));
+			scene.setPixelsFromBinaryVector('r', false, region.getBadPrediction(cs));
 			scene.setPixelsFromBinaryVector('b', false, region.getPattern(cs, 3));
 
 			window.draw(scene.getSprite());
