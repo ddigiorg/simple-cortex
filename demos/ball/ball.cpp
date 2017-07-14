@@ -32,7 +32,9 @@ int main()
 	// Setup OpenCL
 	ComputeSystem cs;
 	ComputeProgram cp;
+
 	std::string kernels_cl = "source/app/region.cl";
+
 	cs.init(ComputeSystem::_gpu);
 	//cs.printCLInfo();
 	cp.loadProgramFromSourceFile(cs, kernels_cl);  // change to loadFromSourceFile
@@ -44,7 +46,7 @@ int main()
 	scene.setPosition(utils::Vec2i(sizeDisplay.x / 2, sizeDisplay.y / 2));
 	scene.setScale((float) scale);
 
-	// Setup Simple Cortex area
+	// Setup Simple Cortex Area
 	unsigned int numPixels = sizeScene.x * sizeScene.y;
 	unsigned int numN = 50; // number of neurons
 
@@ -100,6 +102,11 @@ int main()
 			region.copyActiveNeuronsToPattern(cs, 1);
 			region.copyWinnerNeuronsToPattern(cs, 2);
 
+			if (ball.getStartSequence())
+			{
+				region.zeroPattern(cs, 1);
+				region.zeroPattern(cs, 2);
+			}
 			region.encode(cs, pEncode);
 			region.learn(cs, pLearn);
 			region.predict(cs);
@@ -117,9 +124,9 @@ int main()
 
 			window.clear(sf::Color::Black);
 
-//			scene.setPixelsFromBinaryVector('g', false, ball.getBinaryVector());
-			scene.setPixelsFromBinaryVector('g', false, region.getGoodPrediction(cs));
-			scene.setPixelsFromBinaryVector('r', false, region.getBadPrediction(cs));
+			scene.setPixelsFromBinaryVector('g', false, ball.getBinaryVector());
+//			scene.setPixelsFromBinaryVector('g', false, region.getGoodPrediction(cs));
+//			scene.setPixelsFromBinaryVector('r', false, region.getBadPrediction(cs));
 			scene.setPixelsFromBinaryVector('b', false, region.getPattern(cs, 3));
 
 			window.draw(scene.getSprite());

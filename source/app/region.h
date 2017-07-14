@@ -59,6 +59,7 @@ public:
 	void print(ComputeSystem& cs);
 
 	void setPattern(ComputeSystem& cs, unsigned int p, std::vector<char> vec);
+	void zeroPattern(ComputeSystem& cs, unsigned int p);
 //	void copyInputsToInputs(ComputeSystem& cs, unsigned int dFrom, unsigned int dTo);
 	void copyActiveNeuronsToPattern(ComputeSystem& cs, unsigned int p);
 	void copyWinnerNeuronsToPattern(ComputeSystem& cs, unsigned int p);

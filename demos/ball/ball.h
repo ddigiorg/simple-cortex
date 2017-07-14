@@ -30,11 +30,14 @@ public:
 //			resetRandom();
 			resetRandomSimple();
 
+			_startSequence = true;
 		}
 		else
 		{
 			computeSimplePhysics();
 //			computeNewtonianPhysics();
+
+			_startSequence = false;
 		}
 
 		setBinaryVector();
@@ -45,6 +48,11 @@ public:
 		return _binaryVec;
 	}
 
+	bool getStartSequence()
+	{
+		return _startSequence;
+	}
+
 private:
 	std::vector<float> _pixels;
 	std::vector<char> _binaryVec;
@@ -53,11 +61,12 @@ private:
 	utils::Vec2f _position;
 	utils::Vec2f _velocity;
 
-	float _acceleration = 1.0f;
+	float _acceleration;
 
 	bool _resetFlag;
+	bool _startSequence;
 
-	int counter = 0;
+	int counter;
 
 
 	void reset()
@@ -68,7 +77,7 @@ private:
 		_velocity.x = 0.0f;
 		_velocity.y = 0.0f;
 
-		_resetFlag = false;
+		_resetFlag = true;
 	}
 
 	void resetRandom()
@@ -98,8 +107,6 @@ private:
 
 			_velocity.x = 0.0f;
 			_velocity.y = 1.0f;
-
-//			counter++;
 		}
 		else
 		{
@@ -108,8 +115,6 @@ private:
 
 			_velocity.x = 0.0f;
 			_velocity.y = 1.0f;
-
-//			counter = 0;
 		}
 
 //		_position.x = (int)(utils::getRandomFloat(0.0f, (float)_sizeScene.x));

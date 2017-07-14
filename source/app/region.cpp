@@ -119,6 +119,7 @@ void Region::encode(ComputeSystem &cs, std::vector<unsigned int> pEncode)
 		cs.getQueue().enqueueNDRangeKernel(_overlapDendrites, cl::NullRange, _range);
 		cs.getQueue().finish();
 
+		/*
 		if (p == 0)
 		{
 			_overlapDendrites.setArg(0, _DOVE0);
@@ -132,6 +133,7 @@ void Region::encode(ComputeSystem &cs, std::vector<unsigned int> pEncode)
 			cs.getQueue().enqueueNDRangeKernel(_overlapDendrites, cl::NullRange, _range);
 			cs.getQueue().finish();
 		}
+		*/
 
 		/*
 		if (p == 1)
@@ -166,6 +168,7 @@ void Region::encode(ComputeSystem &cs, std::vector<unsigned int> pEncode)
 	cs.getQueue().enqueueNDRangeKernel(_activateNeurons, cl::NullRange, _range);
 	cs.getQueue().finish();
 
+	/*
 	cs.getQueue().enqueueFillBuffer(_nActives, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
 
 	// Neuron Activation
@@ -179,7 +182,7 @@ void Region::encode(ComputeSystem &cs, std::vector<unsigned int> pEncode)
 	_range = cl::NDRange(_numN);
 	cs.getQueue().enqueueNDRangeKernel(_activateNeurons, cl::NullRange, _range);
 	cs.getQueue().finish();
-
+	*/
 
 	char inhibitFlagArr[1];
 
@@ -472,6 +475,11 @@ void Region::print(ComputeSystem& cs)
 void Region::setPattern(ComputeSystem& cs, unsigned int p, std::vector<char> vec)
 {
 	cs.getQueue().enqueueWriteBuffer(_patterns[p].values, CL_TRUE, 0, sizeof(cl_char) * _patterns[p].numV, vec.data());
+}
+
+void Region::zeroPattern(ComputeSystem& cs, unsigned int p)
+{
+	cs.getQueue().enqueueFillBuffer(_patterns[p].values, static_cast<cl_char>(0), 0, sizeof(cl_char) * _patterns[p].numV);
 }
 
 /*
