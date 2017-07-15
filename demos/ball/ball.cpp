@@ -4,25 +4,20 @@
 
 #include "ball.h"
 #include "utils/render2d.h"
-//#include "utils/text2d.h"
 
 #include "compute/compute-system.h"
 #include "compute/compute-program.h"
 #include "app/region.h"
 
-#include <iostream>
 #include <vector>
 #include <random>
 #include <time.h>
 
 int main()
 {
-	std::mt19937 rng(time(nullptr)); 
-	srand(time(NULL)); 
-
 	int scale = 20;
 
-	utils::Vec2i sizeScene(11, 11);
+	utils::Vec2i sizeScene(21, 21);
 	utils::Vec2i sizeDisplay(sizeScene.x * scale, sizeScene.y * scale);
 
 	// Setup SFML render window
@@ -36,7 +31,7 @@ int main()
 	std::string kernels_cl = "source/app/region.cl";
 
 	cs.init(ComputeSystem::_gpu);
-	//cs.printCLInfo();
+	cs.printCLInfo();
 	cp.loadProgramFromSourceFile(cs, kernels_cl);  // change to loadFromSourceFile
 
 	// Setup Ball Simulation
@@ -48,35 +43,39 @@ int main()
 
 	// Setup Simple Cortex Area
 	unsigned int numPixels = sizeScene.x * sizeScene.y;
-	unsigned int numN = 50; // number of neurons
+	unsigned int numNeurons = 1000;
 
 	std::vector<unsigned int> numVperP(4); // 4 patterns
 	std::vector<unsigned int> numSperD(2); // 2 dendrites (per neuron)
 
+	// Patterns
 	numVperP = {numPixels,  // input - current scene state
-                numN,       // input - previous active neurons
-                numN,       // input - previous winner neurons
+                numNeurons, // input - previous active neurons
+                numNeurons, // input - previous winner neurons
                 numPixels}; // output - predicted future scene state
 
+	// Dendrites
 	numSperD = {1,  // stores current active scene state values
                 1}; // stores previous winner neurons
 
-	Region region(cs, cp, rng, numN, numVperP, numSperD);
+	Region region(cs, cp, numNeurons, numVperP, numSperD);
 
 	std::vector<unsigned int> pEncode(2);
-	std::vector<unsigned int> pLearn(2);
-
 	pEncode = {0, 1};
+
+	std::vector<unsigned int> pLearn(2);
 	pLearn = {0, 2};
+
+	std::vector<char> resetVec(numNeurons);
+	resetVec[numNeurons - 1] = 1;
 
 	// Loop
 	bool quit = false;
 	bool pause = false;
 	int counter = 0;
 
-	sf::Clock clock;
-	sf::Time activateTime;
-//	sf::Time tmTime;
+//	sf::Clock clock;
+//	sf::Time time;
 
 	while (!quit)
 	{
@@ -99,34 +98,34 @@ int main()
 			ball.step();
 
 			region.setPattern(cs, 0, ball.getBinaryVector());
-			region.copyActiveNeuronsToPattern(cs, 1);
-			region.copyWinnerNeuronsToPattern(cs, 2);
+			region.setPatternFromActiveNeurons(cs, 1);
+			region.setPatternFromWinnerNeurons(cs, 2);
 
 			if (ball.getStartSequence())
 			{
-				region.zeroPattern(cs, 1);
-				region.zeroPattern(cs, 2);
+				region.setPattern(cs, 1, resetVec);
+				region.setPattern(cs, 2, resetVec);
 			}
+
+//			clock.restart();
+//			time = clock.getElapsedTime();
+
 			region.encode(cs, pEncode);
 			region.learn(cs, pLearn);
 			region.predict(cs);
 			region.decode(cs);
 
-//			clock.restart();
-//			region.activate(cs, true);
-//			activateTime = clock.getElapsedTime();
+//			time = clock.getElapsedTime();
 
-			region.print(cs);
+//			region.print(cs);
 
-//			std::cout << "Activate(us): " << activateTime.asMicroseconds() << std::endl;
-//			std::cout << std::endl << "TM(us): " << tmTime.asMicroseconds();
-//			std::cout << std::endl << "Total(us): " << spTime.asMicroseconds() + tmTime.asMicroseconds() << std::endl;
+//			printf("\nTime(us): %i", time.asMicroseconds()); 
 
 			window.clear(sf::Color::Black);
 
-			scene.setPixelsFromBinaryVector('g', false, ball.getBinaryVector());
-//			scene.setPixelsFromBinaryVector('g', false, region.getGoodPrediction(cs));
-//			scene.setPixelsFromBinaryVector('r', false, region.getBadPrediction(cs));
+//			scene.setPixelsFromBinaryVector('g', false, ball.getBinaryVector());
+			scene.setPixelsFromBinaryVector('g', false, region.getGoodPrediction(cs));
+			scene.setPixelsFromBinaryVector('r', false, region.getBadPrediction(cs));
 			scene.setPixelsFromBinaryVector('b', false, region.getPattern(cs, 3));
 
 			window.draw(scene.getSprite());

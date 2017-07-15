@@ -12,13 +12,6 @@
 
 #include <vector>
 #include <random>
-#include <iostream>
-
-// v V Value
-// p P Pattern
-// s S Synapse
-// d D Dendrite
-// n N Neuron
 
 class Pattern
 {
@@ -45,33 +38,31 @@ public:
 	Region(
 		ComputeSystem &cs,
 		ComputeProgram &cp,
-		std::mt19937 rng,
 		unsigned int numN,
 		std::vector<unsigned int> numVperP, // number of values per pattern
 		std::vector<unsigned int> numSperD  // number of synapses per dendrite
 	);
 
-	void encode(ComputeSystem& cs, std::vector <unsigned int> pEncode);
-	void learn(ComputeSystem& cs, std::vector<unsigned int> pLearn);
+	void encode(ComputeSystem& cs, std::vector<unsigned int> patterns);
+	void learn(ComputeSystem& cs, std::vector<unsigned int> patterns);
 	void predict(ComputeSystem& cs);
 	void decode(ComputeSystem& cs);
 
-	void print(ComputeSystem& cs);
+	void print(ComputeSystem& cs); // !!!!!!!!!!!
 
 	void setPattern(ComputeSystem& cs, unsigned int p, std::vector<char> vec);
-	void zeroPattern(ComputeSystem& cs, unsigned int p);
-//	void copyInputsToInputs(ComputeSystem& cs, unsigned int dFrom, unsigned int dTo);
-	void copyActiveNeuronsToPattern(ComputeSystem& cs, unsigned int p);
-	void copyWinnerNeuronsToPattern(ComputeSystem& cs, unsigned int p);
+	void setPatternFromActiveNeurons(ComputeSystem& cs, unsigned int p);
+	void setPatternFromWinnerNeurons(ComputeSystem& cs, unsigned int p);
 
 	std::vector<char> getPattern(ComputeSystem &cs, unsigned int d);
-	std::vector<char> getGoodPrediction(ComputeSystem &cs);
-	std::vector<char> getBadPrediction(ComputeSystem &cs);
+	std::vector<char> getGoodPrediction(ComputeSystem &cs); // !!!!!!!!!!
+	std::vector<char> getBadPrediction(ComputeSystem &cs);  // !!!!!!!!!!
 
 private:
-	std::mt19937 _rng;
-
 	cl::NDRange _range;
+
+	std::vector<Pattern> _patterns;
+	std::vector<Dendrite> _dendrites;
 
 	cl_uint _numN;       // number of neurons per area
 	cl_uint _numW;       // number of winner neurons during one time step
@@ -82,23 +73,15 @@ private:
 	cl_uint _sPermMax;   // synapse permanence max value (99)
 	cl_uint _sAddrMax;   // synapse address max value (65535)
 
-	cl::Buffer _inhibitFlag;
-
 	cl::Buffer _nBoosts;   // OpenCL buffer of ushorts (values from 0 to 65535)
 	cl::Buffer _nPredicts; // OpenCL buffer of chars (values from 0 to 1)
 	cl::Buffer _nWinners;  // OpenCL buffer of chars (values from 0 to 1)
 	cl::Buffer _nActives;  // OpenCL buffer of chars (values from 0 to 1)
 	cl::Buffer _nOverlaps; // OpenCL buffer of chars (values from 0 to 255)
-
-	cl::Buffer _preOverlaps;
-	cl::Buffer _DOVE0;
-	cl::Buffer _DOVE1;
+	cl::Buffer _inhibitFlag;
 
 	cl::Buffer _goodPredictions;
 	cl::Buffer _badPredictions;
-
-	std::vector<Pattern> _patterns;
-	std::vector<Dendrite> _dendrites;
 
 	cl::Kernel _overlapDendrites;
 	cl::Kernel _learnSynapses;

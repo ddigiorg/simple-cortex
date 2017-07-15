@@ -58,3 +58,7 @@ If learning is enabled and when a dendrite segment is marked for learning its sy
 inhibition
 
 #### Predict Neurons
+
+## To Do List
+- Optimize learnSynapses kernel
+- Figure out better inhibitFlag variable

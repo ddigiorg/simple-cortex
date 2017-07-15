@@ -26,16 +26,13 @@ public:
 	{
 		if (_resetFlag)
 		{
-//			reset();
-//			resetRandom();
-			resetRandomSimple();
+			reset();
 
 			_startSequence = true;
 		}
 		else
 		{
-			computeSimplePhysics();
-//			computeNewtonianPhysics();
+			computePhysics();
 
 			_startSequence = false;
 		}
@@ -54,102 +51,25 @@ public:
 	}
 
 private:
-	std::vector<float> _pixels;
-	std::vector<char> _binaryVec;
-
-	utils::Vec2i _sizeScene;
-	utils::Vec2f _position;
-	utils::Vec2f _velocity;
-
-	float _acceleration;
-
-	bool _resetFlag;
-	bool _startSequence;
-
-	int counter;
-
-
 	void reset()
 	{
 		_position.x = _sizeScene.x / 2;
 		_position.y = _sizeScene.y / 2;
 
-		_velocity.x = 0.0f;
+//		_position.x = (int)(utils::getRandomFloat(2.0f, (float)_sizeScene.x - 2.0f));
+//		_position.y = (int)(utils::getRandomFloat(2.0f, (float)_sizeScene.y - 2.0f));
+
+		_velocity.x = (int)(3.0f - utils::getRandomFloat(0.0f, 6.0f));
+//		_velocity.x = 0.0f;
+
 		_velocity.y = 0.0f;
 
-		_resetFlag = true;
-	}
-
-	void resetRandom()
-	{
-		_position.x = (int)(utils::getRandomFloat(2.0f, (float)_sizeScene.x - 2.0f));
-		_position.y = (int)(utils::getRandomFloat(2.0f, (float)_sizeScene.y - 2.0f));
-
-		_velocity.x = (int)(2.0f - utils::getRandomFloat(0.0f, 4.0f));
-		_velocity.y = (int)(2.0f - utils::getRandomFloat(0.0f, 4.0f));
+		_acceleration = 1.0f;
 
 		_resetFlag = false;
 	}
 
-	void resetRandomSimple()
-	{
-		float temp = utils::getRandomFloat(-1.0f, 1.0f);
-
-		if (temp < 0)
-			counter = 0;
-		else
-			counter = 1;
-
-		if (counter == 0)
-		{
-			_position.x = 2.0f;
-			_position.y = 5.0f;
-
-			_velocity.x = 0.0f;
-			_velocity.y = 1.0f;
-		}
-		else
-		{
-			_position.x = 6.0f;
-			_position.y = 5.0f;
-
-			_velocity.x = 0.0f;
-			_velocity.y = 1.0f;
-		}
-
-//		_position.x = (int)(utils::getRandomFloat(0.0f, (float)_sizeScene.x));
-//		_position.y = (int)(utils::getRandomFloat(0.0f, (float)_sizeScene.y));
-
-//		_velocity.x = (int)(1.0f - utils::getRandomFloat(0.0f, 2.0f));
-//		_velocity.y = (int)(1.0f - utils::getRandomFloat(0.0f, 2.0f));
-
-		_resetFlag = false;
-	}
-
-	void computeSimplePhysics()
-	{
-		if (_velocity.y == 0.0f)
-			_velocity.y = 1.0f;
-
-		_position.x += _velocity.x;
-		_position.y += _velocity.y;
-
-		bool boundaryUpper = _position.y <= 0.0f;
-		bool boundaryLower = _position.y >= _sizeScene.y - 1.0f; //2
-		bool boundaryLeft  = _position.x <=  0.0f;
-		bool boundaryRight = _position.x >= _sizeScene.x - 1.0f;
-
-		if (boundaryLower)
-			_velocity.y *= -1.0f;
-//			_resetFlag = true;
-		if (boundaryUpper)
-			_resetFlag = true;
-//			_velocity.y *= -1.0f;
-//		if (boundaryLeft || boundaryRight)
-//			_velocity.x *= -1.0f;
-	}
-
-	void computeNewtonianPhysics()
+	void computePhysics()
 	{
 		_velocity.y += _acceleration;
 
@@ -208,6 +128,19 @@ private:
 			}
 		}
 	}
+
+private:
+	std::vector<char> _binaryVec;
+
+	utils::Vec2i _sizeScene;
+
+	utils::Vec2f _position;
+	utils::Vec2f _velocity;
+
+	float _acceleration;
+
+	bool _resetFlag;
+	bool _startSequence;
 };
 
 #endif

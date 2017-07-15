@@ -7,15 +7,15 @@ kernel void overlapDendrites(
 	global ushort* sAddrs,
 	global uchar* sPerms,
 	global uchar* inputs,
-	uint numSpD,
+	uint numSperD,
 	uint dThresh)
 {
 	uint n = get_global_id(0);
 
 	uint dOverlap = 0;
 
-	uint s0 = n * numSpD;
-	for (uint s = s0; s < s0 + numSpD; s++)
+	uint s0 = n * numSperD;
+	for (uint s = s0; s < s0 + numSperD; s++)
 	{
 		if (sPerms[s] > 0 && inputs[sAddrs[s]] > 0)
 			dOverlap++;
@@ -27,13 +27,12 @@ kernel void overlapDendrites(
 	}
 }
 
-// Need to figure out how to optimize this algorithm
 kernel void learnSynapses(
 	global ushort* sAddrs,
 	global uchar* sPerms,
 	global uchar* nActives,
 	global uchar* inputs,
-	uint numSpD,
+	uint numSperD,
 	uint numIn,
 	uint sPermMax)
 {
@@ -43,8 +42,8 @@ kernel void learnSynapses(
 	{
 		uint j = 0;
 
-		uint s0 = n * numSpD;
-		for (uint s = s0; s < s0 + numSpD; s++)
+		uint s0 = n * numSperD;
+		for (uint s = s0; s < s0 + numSperD; s++)
 		{
 			if (sPerms[s] > 0)
 			{
@@ -58,7 +57,7 @@ kernel void learnSynapses(
 			}
 		}
 
-		for (uint s = s0; s < s0 + numSpD; s++)
+		for (uint s = s0; s < s0 + numSperD; s++)
 		{
 			if (sPerms[s] == 0)
 			{
@@ -68,7 +67,7 @@ kernel void learnSynapses(
 					{
 						bool flag = true;
 
-						for (uint s2 = s0; s2 < s0 + numSpD; s2++)
+						for (uint s2 = s0; s2 < s0 + numSperD; s2++)
 						{
 							if (sAddrs[s2] == i)
 								flag = false;
@@ -86,7 +85,6 @@ kernel void learnSynapses(
 				}				
 			}
 		}
-
 	}
 }
 
@@ -96,18 +94,17 @@ kernel void activateNeurons(
 	global uchar* nActives,
 	global uchar* nOverlaps,
 	global uchar* inhibitFlag,
-	uint nActThresh)
+	uint nActThresh,
+	uint sAddrMax)
 {
 	uint n = get_global_id(0);
 
-	if (nBoosts[n] < 65535) //!!!!!!!!!!!
+	if (nBoosts[n] < sAddrMax)
 		nBoosts[n]++;
-
-	if (nOverlaps[n] >= 1)
-		nActives[n] = 1;
 
 	if (nOverlaps[n] >= nActThresh)
 	{
+		nActives[n] = 1;
 		nWinners[n] = 1;
 		nBoosts[n] = 0;
 		inhibitFlag[0] = 1;
