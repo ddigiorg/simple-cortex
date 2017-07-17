@@ -43,20 +43,21 @@ public:
 		std::vector<unsigned int> numSperD  // number of synapses per dendrite
 	);
 
-	void encode(ComputeSystem& cs, std::vector<unsigned int> patterns);
-	void learn(ComputeSystem& cs, std::vector<unsigned int> patterns);
-	void predict(ComputeSystem& cs);
-	void decode(ComputeSystem& cs);
-
-	void print(ComputeSystem& cs); // !!!!!!!!!!!
+	void encode(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums);
+	void learn(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums);
+	void predict(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums);
+	void decode(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums);
 
 	void setPattern(ComputeSystem& cs, unsigned int p, std::vector<char> vec);
 	void setPatternFromActiveNeurons(ComputeSystem& cs, unsigned int p);
-	void setPatternFromWinnerNeurons(ComputeSystem& cs, unsigned int p);
 
-	std::vector<char> getPattern(ComputeSystem &cs, unsigned int d);
-	std::vector<char> getGoodPrediction(ComputeSystem &cs); // !!!!!!!!!!
-	std::vector<char> getBadPrediction(ComputeSystem &cs);  // !!!!!!!!!!
+	std::vector<char> getPattern(ComputeSystem &cs, unsigned int p);
+	std::vector<unsigned short> getSynapseAddrs(ComputeSystem &cs, unsigned int d);
+	std::vector<char> getSynapsePerms(ComputeSystem &cs, unsigned int d);
+	std::vector<char> getNeuronActives(ComputeSystem &cs);
+	std::vector<char> getNeuronPredicts(ComputeSystem &cs);
+	std::vector<unsigned short> getNeuronBoosts(ComputeSystem &cs);
+
 
 private:
 	cl::NDRange _range;
@@ -65,23 +66,15 @@ private:
 	std::vector<Dendrite> _dendrites;
 
 	cl_uint _numN;       // number of neurons per area
-	cl_uint _numW;       // number of winner neurons during one time step
-	cl_uint _numP;       // number of patterns per area
-	cl_uint _numDperN;   // number of dendrites per neuron
-	cl_uint _nActThresh; // neuron activation threshold
-	cl_uint _nPreThresh; // neuron prediction threshold
+	cl_uint _numAN;      // number of active neurons during a single time step
 	cl_uint _sPermMax;   // synapse permanence max value (99)
 	cl_uint _sAddrMax;   // synapse address max value (65535)
 
 	cl::Buffer _nBoosts;   // OpenCL buffer of ushorts (values from 0 to 65535)
 	cl::Buffer _nPredicts; // OpenCL buffer of chars (values from 0 to 1)
-	cl::Buffer _nWinners;  // OpenCL buffer of chars (values from 0 to 1)
 	cl::Buffer _nActives;  // OpenCL buffer of chars (values from 0 to 1)
 	cl::Buffer _nOverlaps; // OpenCL buffer of chars (values from 0 to 255)
-	cl::Buffer _inhibitFlag;
-
-	cl::Buffer _goodPredictions;
-	cl::Buffer _badPredictions;
+	cl::Buffer _inhibitFlag; // OpenCL buffer of char (value from 0 to 1)
 
 	cl::Kernel _overlapDendrites;
 	cl::Kernel _learnSynapses;

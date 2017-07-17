@@ -43,39 +43,29 @@ int main()
 
 	// Setup Simple Cortex Area
 	unsigned int numPixels = sizeScene.x * sizeScene.y;
-	unsigned int numNeurons = 1000;
+	unsigned int numNeurons = 65000; // note: cant go over 65535 neurons unless _sAddrMax is modified
 
 	std::vector<unsigned int> numVperP(4); // 4 patterns
 	std::vector<unsigned int> numSperD(2); // 2 dendrites (per neuron)
 
 	// Patterns
-	numVperP = {numPixels,  // input - current scene state
-                numNeurons, // input - previous active neurons
-                numNeurons, // input - previous winner neurons
-                numPixels}; // output - predicted future scene state
+	numVperP = {numPixels,  // input - current binary scene state
+                numNeurons, // input - previous neuron activations
+                numPixels}; // output - predicted future binary scene state
 
 	// Dendrites
-	numSperD = {1,  // stores current active scene state values
-                1}; // stores previous winner neurons
+	numSperD = {1,  // learns current ball location address
+                1}; // learns previous active neuron address
 
 	Region region(cs, cp, numNeurons, numVperP, numSperD);
 
-	std::vector<unsigned int> pEncode(2);
-	pEncode = {0, 1};
-
-	std::vector<unsigned int> pLearn(2);
-	pLearn = {0, 2};
-
-	std::vector<char> resetVec(numNeurons);
-	resetVec[numNeurons - 1] = 1;
+	std::vector<char> resetPreActNeuVec(numNeurons);
+	resetPreActNeuVec[numNeurons - 1] = 1;
 
 	// Loop
 	bool quit = false;
 	bool pause = false;
 	int counter = 0;
-
-//	sf::Clock clock;
-//	sf::Time time;
 
 	while (!quit)
 	{
@@ -99,34 +89,24 @@ int main()
 
 			region.setPattern(cs, 0, ball.getBinaryVector());
 			region.setPatternFromActiveNeurons(cs, 1);
-			region.setPatternFromWinnerNeurons(cs, 2);
 
 			if (ball.getStartSequence())
 			{
-				region.setPattern(cs, 1, resetVec);
-				region.setPattern(cs, 2, resetVec);
+				region.setPattern(cs, 1, resetPreActNeuVec);
+				region.setPattern(cs, 2, resetPreActNeuVec);
 			}
 
-//			clock.restart();
-//			time = clock.getElapsedTime();
+			region.encode(cs, {0, 1}, {0, 1});
+			region.learn(cs, {0, 1}, {0, 1});
+			region.predict(cs, {1}, {1});
+			region.decode(cs, {2}, {0});
 
-			region.encode(cs, pEncode);
-			region.learn(cs, pLearn);
-			region.predict(cs);
-			region.decode(cs);
-
-//			time = clock.getElapsedTime();
-
-//			region.print(cs);
-
-//			printf("\nTime(us): %i", time.asMicroseconds()); 
+			//PUT FORECASTING HERE
 
 			window.clear(sf::Color::Black);
 
-//			scene.setPixelsFromBinaryVector('g', false, ball.getBinaryVector());
-			scene.setPixelsFromBinaryVector('g', false, region.getGoodPrediction(cs));
-			scene.setPixelsFromBinaryVector('r', false, region.getBadPrediction(cs));
-			scene.setPixelsFromBinaryVector('b', false, region.getPattern(cs, 3));
+			scene.setPixelsFromBinaryVector('g', false, region.getPattern(cs, 0));
+			scene.setPixelsFromBinaryVector('b', false, region.getPattern(cs, 2));
 
 			window.draw(scene.getSprite());
 

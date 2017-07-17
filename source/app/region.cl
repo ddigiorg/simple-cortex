@@ -4,9 +4,9 @@
 
 kernel void overlapDendrites(
 	global uchar* nOverlaps,
+	global uchar* inputs,
 	global ushort* sAddrs,
 	global uchar* sPerms,
-	global uchar* inputs,
 	uint numSperD,
 	uint dThresh)
 {
@@ -28,12 +28,12 @@ kernel void overlapDendrites(
 }
 
 kernel void learnSynapses(
+	global uchar* inputs,
+	uint numIn,
 	global ushort* sAddrs,
 	global uchar* sPerms,
-	global uchar* nActives,
-	global uchar* inputs,
 	uint numSperD,
-	uint numIn,
+	global uchar* nActives,
 	uint sPermMax)
 {
 	uint n = get_global_id(0);
@@ -90,22 +90,20 @@ kernel void learnSynapses(
 
 kernel void activateNeurons(
 	global ushort* nBoosts,
-	global uchar* nWinners,
 	global uchar* nActives,
 	global uchar* nOverlaps,
 	global uchar* inhibitFlag,
-	uint nActThresh,
-	uint sAddrMax)
+	uint sAddrMax,
+	uint nThresh)
 {
 	uint n = get_global_id(0);
 
 	if (nBoosts[n] < sAddrMax)
 		nBoosts[n]++;
 
-	if (nOverlaps[n] >= nActThresh)
+	if (nOverlaps[n] >= nThresh)
 	{
 		nActives[n] = 1;
-		nWinners[n] = 1;
 		nBoosts[n] = 0;
 		inhibitFlag[0] = 1;
 	}
@@ -114,11 +112,11 @@ kernel void activateNeurons(
 kernel void predictNeurons(
 	global uchar* nPredicts,
 	global uchar* nOverlaps,
-	uint nPreThresh)
+	uint nThresh)
 {
 	uint n = get_global_id(0);
 
-	if (nOverlaps[n] >= nPreThresh)
+	if (nOverlaps[n] >= nThresh)
 		nPredicts[n] = 1;
 }
 
