@@ -10,8 +10,6 @@
 
 #include "utils/utils.h"
 
-#include <iostream>
-
 class Render2D
 {
 public:
@@ -59,31 +57,15 @@ public:
 		}
 	}
 
-	/*
-	void setPixels (char color, bool transparancy, std::vector<float> imageData)
+	void setPixels (std::vector<float> r, std::vector<float> g, std::vector<float> b)
 	{
 		for (int p = 0; p < _numPixels; p++)
 		{
-			if (!(transparancy && imageData[p] == 0.0f))
-			{
-				switch(color)
-				{
-					case 'r':
-						_rData[p] = imageData[p];
-						break;
-
-					case 'g':
-						_gData[p] = imageData[p];
-						break;
-
-					case 'b':
-						_bData[p] = imageData[p];
-						break;
-				}
-			}
+			_rData[p] = r[p];
+			_gData[p] = g[p];
+			_bData[p] = b[p];
 		}
 	}
-	*/
 
 	void setPosition(utils::Vec2i position)
 	{   

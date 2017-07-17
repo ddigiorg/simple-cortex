@@ -1,6 +1,6 @@
-// =========
-// region.cl
-// =========
+// =======
+// area.cl
+// =======
 
 kernel void overlapDendrites(
 	global uchar* nOverlaps,

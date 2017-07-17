@@ -1,13 +1,10 @@
-// ==========
-// region.cpp
-// ==========
+// ========
+// area.cpp
+// ========
 
-#include "region.h"
+#include "area.h"
 
-#include <iostream>
-#include <cstdlib>
-
-Region::Region(
+Area::Area(
 	ComputeSystem &cs,
 	ComputeProgram &cp,
 	unsigned int numN,
@@ -66,7 +63,7 @@ Region::Region(
 	_decodeNeurons    = cl::Kernel(cp.getProgram(), "decodeNeurons");
 }
 
-void Region::encode(ComputeSystem &cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
+void Area::encode(ComputeSystem &cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
 {
 	cs.getQueue().enqueueFillBuffer(_nOverlaps, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
 
@@ -139,7 +136,7 @@ void Region::encode(ComputeSystem &cs, std::vector<unsigned int> pNums, std::vec
 	}
 }
 
-void Region::learn(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
+void Area::learn(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
 {
 	for (unsigned int i = 0; i < dNums.size(); i++)
 	{
@@ -157,7 +154,7 @@ void Region::learn(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vect
 	}
 }
 
-void Region::predict(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
+void Area::predict(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
 {
 	cs.getQueue().enqueueFillBuffer(_nOverlaps, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
 	cs.getQueue().enqueueFillBuffer(_nPredicts, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
@@ -166,7 +163,7 @@ void Region::predict(ComputeSystem& cs, std::vector<unsigned int> pNums, std::ve
 	for (unsigned int i = 0; i < dNums.size(); i++)
 	{
 		_overlapDendrites.setArg(0, _nOverlaps);
-		_overlapDendrites.setArg(1, _nActives);  //!!!!!!!!
+		_overlapDendrites.setArg(1, _patterns[pNums[i]].values);
 		_overlapDendrites.setArg(2, _dendrites[dNums[i]].sAddrs);
 		_overlapDendrites.setArg(3, _dendrites[dNums[i]].sPerms);
 		_overlapDendrites.setArg(4, _dendrites[dNums[i]].numSperD);
@@ -189,7 +186,7 @@ void Region::predict(ComputeSystem& cs, std::vector<unsigned int> pNums, std::ve
 	cs.getQueue().finish();
 }
 
-void Region::decode(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
+void Area::decode(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
 {
 	for (unsigned int i = 0; i < dNums.size(); i++)
 	{
@@ -205,52 +202,57 @@ void Region::decode(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vec
 	}
 }
 
-void Region::setPattern(ComputeSystem& cs, unsigned int p, std::vector<char> vec)
+void Area::setPattern(ComputeSystem& cs, unsigned int p, std::vector<char> vec)
 {
 	cs.getQueue().enqueueWriteBuffer(_patterns[p].values, CL_TRUE, 0, sizeof(cl_char) * _patterns[p].numV, vec.data());
 }
 
-void Region::setPatternFromActiveNeurons(ComputeSystem& cs, unsigned int p)
+void Area::setPatternFromActiveNeurons(ComputeSystem& cs, unsigned int p)
 {
 	cs.getQueue().enqueueCopyBuffer(_nActives, _patterns[p].values, 0, 0, sizeof(cl_char) * _numN);
 }
 
-std::vector<char> Region::getPattern(ComputeSystem &cs, unsigned int p)
+void Area::setPatternFromPredictNeurons(ComputeSystem& cs, unsigned int p)
+{
+	cs.getQueue().enqueueCopyBuffer(_nPredicts, _patterns[p].values, 0, 0, sizeof(cl_char) * _numN);
+}
+
+std::vector<char> Area::getPattern(ComputeSystem &cs, unsigned int p)
 {
 	std::vector<char> vec(_patterns[p].numV);
 	cs.getQueue().enqueueReadBuffer(_patterns[p].values, CL_TRUE, 0, sizeof(cl_char) * _patterns[p].numV, vec.data(), NULL);
 	return vec;
 }
 
-std::vector<unsigned short> Region::getSynapseAddrs(ComputeSystem &cs, unsigned int d)
+std::vector<unsigned short> Area::getSynapseAddrs(ComputeSystem &cs, unsigned int d)
 {
 	std::vector<unsigned short> vec(_dendrites[d].numS);
 	cs.getQueue().enqueueReadBuffer(_dendrites[d].sAddrs, CL_TRUE, 0, sizeof(cl_ushort) * _dendrites[d].numS, vec.data(), NULL);
 	return vec;
 }
 
-std::vector<char> Region::getSynapsePerms(ComputeSystem &cs, unsigned int d)
+std::vector<char> Area::getSynapsePerms(ComputeSystem &cs, unsigned int d)
 {
 	std::vector<char> vec(_dendrites[d].numS);
 	cs.getQueue().enqueueReadBuffer(_dendrites[d].sPerms, CL_TRUE, 0, sizeof(cl_char) * _dendrites[d].numS, vec.data(), NULL);
 	return vec;
 }
 
-std::vector<char> Region::getNeuronActives(ComputeSystem &cs)
+std::vector<char> Area::getNeuronActives(ComputeSystem &cs)
 {
 	std::vector<char> vec(_numN);
 	cs.getQueue().enqueueReadBuffer(_nActives, CL_TRUE, 0, sizeof(cl_char) * _numN, vec.data(), NULL);
 	return vec;
 }
 
-std::vector<char> Region::getNeuronPredicts(ComputeSystem &cs)
+std::vector<char> Area::getNeuronPredicts(ComputeSystem &cs)
 {
 	std::vector<char> vec(_numN);
 	cs.getQueue().enqueueReadBuffer(_nPredicts, CL_TRUE, 0, sizeof(cl_char) * _numN, vec.data(), NULL);
 	return vec;
 }
 
-std::vector<unsigned short> Region::getNeuronBoosts(ComputeSystem &cs)
+std::vector<unsigned short> Area::getNeuronBoosts(ComputeSystem &cs)
 {
 	std::vector<unsigned short> vec(_numN);
 	cs.getQueue().enqueueReadBuffer(_nBoosts, CL_TRUE, 0, sizeof(cl_ushort) * _numN, vec.data(), NULL);

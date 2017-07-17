@@ -8,7 +8,6 @@
 #include "utils/utils.h"
 
 #include <vector>
-#include <iostream>
 
 class Ball
 {
@@ -53,14 +52,10 @@ public:
 private:
 	void reset()
 	{
-//		_position.x = (int)(_sizeScene.x / 2.0f);
-//		_position.y = (int)(_sizeScene.y / 2.0f);
-
 		_position.x = (int)(utils::getRandomFloat(0.0f, (float)_sizeScene.x - 1.0f));
 		_position.y = (int)(utils::getRandomFloat(0.0f, (float)_sizeScene.y - 1.0f));
 
 		_velocity.x = (int)(2.0f - utils::getRandomFloat(0.0f, 4.0f));
-//		_velocity.x = 0.0f;
 		_velocity.y = 0.0f;
 
 		_acceleration = 1.0f;

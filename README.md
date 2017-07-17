@@ -62,8 +62,5 @@ inhibition
 ## To Do List
 - Optimize learnSynapses kernel
 - Figure out better inhibitFlag variable
-- rename region.xxx to area.xxx
-- rename app/ to cortex/
-- add forecasting to ball demo
 - make ball demo video
 - write paper

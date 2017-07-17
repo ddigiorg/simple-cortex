@@ -4,14 +4,11 @@
 
 #include "ball.h"
 #include "utils/render2d.h"
-
 #include "compute/compute-system.h"
 #include "compute/compute-program.h"
-#include "app/region.h"
+#include "cortex/area.h"
 
 #include <vector>
-#include <random>
-#include <time.h>
 
 int main()
 {
@@ -28,7 +25,7 @@ int main()
 	ComputeSystem cs;
 	ComputeProgram cp;
 
-	std::string kernels_cl = "source/app/region.cl";
+	std::string kernels_cl = "source/cortex/area.cl";
 
 	cs.init(ComputeSystem::_gpu);
 	cs.printCLInfo();
@@ -44,6 +41,7 @@ int main()
 	// Setup Simple Cortex Area
 	unsigned int numPixels = sizeScene.x * sizeScene.y;
 	unsigned int numNeurons = 65000; // note: cant go over 65535 neurons unless _sAddrMax is modified
+	unsigned int numForecasts = 10;
 
 	std::vector<unsigned int> numVperP(4); // 4 patterns
 	std::vector<unsigned int> numSperD(2); // 2 dendrites (per neuron)
@@ -51,21 +49,26 @@ int main()
 	// Patterns
 	numVperP = {numPixels,  // input - current binary scene state
                 numNeurons, // input - previous neuron activations
+				numNeurons, // input - storage of current neuron activations or predictions for forecasting
                 numPixels}; // output - predicted future binary scene state
 
 	// Dendrites
 	numSperD = {1,  // learns current ball location address
                 1}; // learns previous active neuron address
 
-	Region region(cs, cp, numNeurons, numVperP, numSperD);
+	Area area(cs, cp, numNeurons, numVperP, numSperD);
 
 	std::vector<char> resetPreActNeuVec(numNeurons);
 	resetPreActNeuVec[numNeurons - 1] = 1;
 
+	// Color vectors
+	std::vector<float> r(numPixels);
+	std::vector<float> g(numPixels);
+	std::vector<float> b(numPixels);
+
 	// Loop
 	bool quit = false;
 	bool pause = false;
-	int counter = 0;
 
 	while (!quit)
 	{
@@ -85,29 +88,59 @@ int main()
  
 		if (!pause)
 		{
-			ball.step();
-
-			region.setPattern(cs, 0, ball.getBinaryVector());
-			region.setPatternFromActiveNeurons(cs, 1);
-
-			if (ball.getStartSequence())
+			// Reset color vectors
+			for (unsigned int p = 0; p < numPixels; p++)
 			{
-				region.setPattern(cs, 1, resetPreActNeuVec);
-				region.setPattern(cs, 2, resetPreActNeuVec);
+				r[p] = 0.0f;
+				g[p] = 0.0f;
+				b[p] = 0.0f;
 			}
 
-			region.encode(cs, {0, 1}, {0, 1});
-			region.learn(cs, {0, 1}, {0, 1});
-			region.predict(cs, {1}, {1});
-			region.decode(cs, {2}, {0});
+			// Step ball simulation
+			ball.step();
 
-			//PUT FORECASTING HERE
+			// Set cortical inputs
+			area.setPattern(cs, 0, ball.getBinaryVector());
+			area.setPatternFromActiveNeurons(cs, 1);
+
+			if (ball.getStartSequence())
+				area.setPattern(cs, 1, resetPreActNeuVec);
+
+			// Activate neurons and learn
+			area.encode(cs, {0, 1}, {0, 1});
+			area.learn(cs, {0, 1}, {0, 1});
+
+			// Forecast the future
+			for (unsigned int i = 0; i < numForecasts; i++)
+			{
+				if (i == 0)
+					area.setPatternFromActiveNeurons(cs, 2);
+				else
+					area.setPatternFromPredictNeurons(cs, 2);
+
+				area.predict(cs, {2}, {1});
+				area.decode(cs, {3}, {0});
+
+				std::vector<char> prediction = area.getPattern(cs, 3);
+
+				for (unsigned int p = 0; p < numPixels; p++)
+				{
+					if (prediction[p] > 0)
+						b[p] = 1.0f - 0.1f * i;
+				}
+			}
+
+			std::vector<char> input = area.getPattern(cs, 0);
+
+			for (unsigned int p = 0; p < numPixels; p++)
+			{
+				if (input[p] > 0)
+					g[p] = 1.0f;
+			}
+
+			scene.setPixels(r, g, b);
 
 			window.clear(sf::Color::Black);
-
-			scene.setPixelsFromBinaryVector('g', false, region.getPattern(cs, 0));
-			scene.setPixelsFromBinaryVector('b', false, region.getPattern(cs, 2));
-
 			window.draw(scene.getSprite());
 
 			pause = true;

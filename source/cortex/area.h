@@ -1,9 +1,9 @@
-// ========
-// region.h
-// ========
+// ======
+// area.h
+// ======
 
-#ifndef REGION_H
-#define REGION_H
+#ifndef AREA_H
+#define AREA_H
 
 #include "utils/utils.h"
 
@@ -11,7 +11,6 @@
 #include "compute/compute-program.h"
 
 #include <vector>
-#include <random>
 
 class Pattern
 {
@@ -32,10 +31,10 @@ class Dendrite
 		cl::Buffer sPerms; // OpenCL buffer of chars (values from 0 to 99)
 };
 
-class Region
+class Area
 {
 public:
-	Region(
+	Area(
 		ComputeSystem &cs,
 		ComputeProgram &cp,
 		unsigned int numN,
@@ -50,6 +49,7 @@ public:
 
 	void setPattern(ComputeSystem& cs, unsigned int p, std::vector<char> vec);
 	void setPatternFromActiveNeurons(ComputeSystem& cs, unsigned int p);
+	void setPatternFromPredictNeurons(ComputeSystem& cs, unsigned int p);
 
 	std::vector<char> getPattern(ComputeSystem &cs, unsigned int p);
 	std::vector<unsigned short> getSynapseAddrs(ComputeSystem &cs, unsigned int d);
