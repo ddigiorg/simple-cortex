@@ -4,39 +4,49 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 
 ## Functionality
 
-#### Learn Patterns
+Simple Cortex can learn and predict any type of binary input pattern.
 
-- sensory patterns
-- motor patterns
+Input patterns may contain sensory or motor information as well as temporal information
 
-#### Learn Sequences
+Prediction Beyond one time step into the future.
 
-#### Long Term Prediction
-
-Beyond one time step into the future.
+Intention of upgrading the capabilities to learning floating-point inputs.
 
 ## Architecture
 
-#### Area
+Simple Cortex architecture is inspired by the networked hierarchy of interacting structures found in the mammalian neocortex.
 
-A SC area is a collection of neurons modeled by pyramidal neurons found in HTM Theory and the mammalian neocortex.  However unlike HTM theory, these neurons are not pre-arranged in minicolumns of shared input receptive fields.  Rather the neurons will respond to and learn the receptive fields dynamically, allowing for a much simpler set of algorithms.
+#### Synapse
 
-#### Neurons
+A SC synapse is the most fundamental memory storage unit.  In the neocortex synapses grow towards and connect to 
 
-A SC neuron is a unit who's activation represents the occourance of one or more patterns.  Each neuron has 3 states:
-- Inactive: Not enough dendrites are active to set the neuron into activate or predict states.
-- Active: When enough dendrites are active and pass a threshold value the neuron is active and may learn its input patterns.
-- Predicted: When one or a few dendrites are active, the neuron is predicted.  This means that after sufficient learning, the observation of just one pattern implies the occourance of other patterns even though they have not been directly observed. 
-
-#### Dendrites
-
-A SC dendrite is a collection of synapses that form a coincidence detector and represents the occourance of a pattern.  When enough synapses are active and pass a threshold value the dentrite is active.
-
-#### Synapses
-
-A SC synapse is the fundamental memory storage unit.  Like HTM Theory each synapse has:
+Each synapse has:
 - Address: represents the presynaptic connection, or what input node or neuron the synapse is connected to.
 - Permanence: represents how well the synapse is connected.  Unlike HTM Theory synapses are always connected to the presynaptic connection.
+
+#### Dendrite
+
+A SC "dendrite" is a collection of synapses formimg a coincidence detector.  When enough of these synapses become active at one time step, the dentrite is active and represents the occourance of a pattern.
+
+#### (Dendritic) Tree
+
+A SC "tree" is a collection of dendrites that observe and learn from a common pattern.
+
+#### Neuron
+
+A SC "neuron" is a collection of dendrites whos activation implies the occourance of 
+
+modeled by pyramidal neurons found in the mammalian neocortex and modeled in HTM theory.
+
+#### Area
+
+A SC "area" is a collection of neurons 
+
+#### Region
+
+A SC "region" is a collection of areas.  
+
+The equivalent of V1 or M1, etc
 
 ## Core Algorithms
 
