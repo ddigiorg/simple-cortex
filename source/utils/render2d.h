@@ -13,13 +13,14 @@
 class Render2D
 {
 public:
-	Render2D(utils::Vec2i size)
+	Render2D(unsigned int sizeX, unsigned int sizeY)
 	{
-		_size = size;
+		_sizeX = sizeX;
+		_sizeY = sizeY;
 
-		_numPixels = _size.x * _size.y;
+		_numPixels = _sizeX * _sizeY;
 
-		_image.create(_size.x, _size.y);
+		_image.create(_sizeX, _sizeY);
 
 		_rData.resize(_numPixels);
 		_gData.resize(_numPixels);
@@ -67,9 +68,9 @@ public:
 		}
 	}
 
-	void setPosition(utils::Vec2i position)
+	void setPosition(unsigned int positionX, unsigned int positionY)
 	{   
-		_sprite.setPosition(position.x, position.y);
+		_sprite.setPosition(positionX, positionY);
 	}
 
 	void setScale(float scale)
@@ -79,11 +80,11 @@ public:
 
 	sf::Sprite getSprite()
 	{   
-		for (int y = 0; y < _size.y; y++)
+		for (int y = 0; y < _sizeX; y++)
 		{
-			for (int x = 0; x < _size.x; x++)
+			for (int x = 0; x < _sizeX; x++)
 			{
- 				unsigned int i = x + _size.x * y;
+ 				unsigned int i = x + _sizeX * y;
 
 				_color.r = 255.0f * _rData[i];
 				_color.g = 255.0f * _gData[i];
@@ -101,8 +102,9 @@ public:
 	}
 
 private:
-	utils::Vec2i _size;
-	int _numPixels;
+	unsigned int _sizeX;
+	unsigned int _sizeY;
+	unsigned int _numPixels;
 
 	std::vector<float> _rData;
 	std::vector<float> _gData;

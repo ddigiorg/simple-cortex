@@ -71,6 +71,13 @@ namespace utils
 		float ran = (float) rand() / RAND_MAX;
 		return min + (max - min) * ran;
 	}
+
+	inline int getRandomInt(int min, int max)
+	{
+		int ran = rand() % (max - min + 1) + min;
+
+		return ran;
+	}
 }
 
 #endif

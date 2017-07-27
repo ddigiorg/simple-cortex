@@ -7,7 +7,7 @@
 #include <fstream>
 #include <iostream>
 
-bool ComputeProgram::loadProgramFromSourceFile(ComputeSystem& cs, const std::string& fileName)
+bool ComputeProgram::loadFromSourceFile(ComputeSystem& cs, const std::string& fileName)
 {
 	std::ifstream sourceFile(fileName);
 

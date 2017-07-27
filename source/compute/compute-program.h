@@ -12,7 +12,7 @@ compute_program.h
 class ComputeProgram
 {
 public:
-	bool loadProgramFromSourceFile(ComputeSystem& cs, const std::string& fileName);
+	bool loadFromSourceFile(ComputeSystem& cs, const std::string& fileName);
 
 	cl::Program getProgram()
 	{

@@ -4,58 +4,52 @@
 
 #include "area.h"
 
-Area::Area(
-	ComputeSystem &cs,
-	ComputeProgram &cp,
-	unsigned int numN,
-	std::vector<unsigned int> numVperP,
-	std::vector<unsigned int> numSperD)
+void Area::init(ComputeSystem &cs, ComputeProgram &cp, unsigned int numNpA, std::vector<unsigned int> numSpDs)
 {
-	// Initialize Variables
-	_numN = static_cast<cl_uint>(numN);
-	_numAN = static_cast<cl_uint>(1);
-	_sPermMax = static_cast<cl_uint>(99);
-	_sAddrMax = static_cast<cl_uint>(65535);
+	_numNpA = static_cast<cl_uint>(numNpA);
+	_numDpN = static_cast<cl_uint>(numSpDs.size());
+	_numAN  = static_cast<cl_uint>(1);
 
-	_patterns.resize(numVperP.size());
+	_sizeBoosts = sizeof(cl_ushort) * _numNpA;
+	_sizeStates = sizeof(cl_char) * _numNpA;
+	_sizeOverlaps = sizeof(cl_char) * _numNpA;
+	_sizeInhibitFlag = sizeof(cl_char);
 
-	for (unsigned int p = 0; p < numVperP.size(); p++)
+	_nBoosts = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, _sizeBoosts);
+	_nStates = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, _sizeStates);
+	_nOverlaps = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, _sizeOverlaps);
+	_inhibitFlag = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, _sizeInhibitFlag);
+
+	cs.getQueue().enqueueFillBuffer(_nBoosts, _zeroBoosts, 0, _sizeBoosts);
+	cs.getQueue().enqueueFillBuffer(_nStates, _zeroStates, 0, _sizeStates);
+	cs.getQueue().enqueueFillBuffer(_nOverlaps, _zeroOverlaps, 0, _sizeOverlaps);
+	cs.getQueue().enqueueFillBuffer(_inhibitFlag, _zeroInhibitFlag, 0, _sizeInhibitFlag);
+
+	_forests.resize(_numDpN);
+
+	for (unsigned int d = 0; d < _numDpN; d++)
 	{
-		_patterns[p].numV = static_cast<cl_uint>(numVperP[p]);
+		_forests[d].numSpD = static_cast<cl_uint>(numSpDs[d]);
+		_forests[d].numSpF = static_cast<cl_uint>(numSpDs[d] * _numNpA);
 
-		_patterns[p].values = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _patterns[p].numV);
+		float percent = 1.0; // 0.5
+		unsigned int threshold = _forests[d].numSpD * percent - 1;
 
-		cs.getQueue().enqueueFillBuffer(_patterns[p].values, static_cast<cl_char>(0), 0, sizeof(cl_char) * _patterns[p].numV);
+		if (threshold == 0)
+			threshold = 1;
+
+		_forests[d].dThresh = static_cast<cl_uint>(threshold);
+
+		_forests[d].sizeAddrs = sizeof(cl_ushort) * _forests[d].numSpF;
+		_forests[d].sizePerms = sizeof(cl_char) * _forests[d].numSpF;
+
+		_forests[d].sAddrs = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, _forests[d].sizeAddrs);
+		_forests[d].sPerms = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, _forests[d].sizePerms);
+
+		cs.getQueue().enqueueFillBuffer(_forests[d].sAddrs, _zeroAddrs, 0, _forests[d].sizeAddrs);
+		cs.getQueue().enqueueFillBuffer(_forests[d].sPerms, _zeroPerms, 0, _forests[d].sizePerms);
 	}
 
-	_dendrites.resize(numSperD.size());
-
-	for (unsigned int d = 0; d < numSperD.size(); d++)
-	{
-		_dendrites[d].numSperD = static_cast<cl_uint>(numSperD[d]);
-		_dendrites[d].numS     = static_cast<cl_uint>(numSperD[d] * _numN);
-		_dendrites[d].dThresh  = static_cast<cl_uint>(1);
-
-		_dendrites[d].sAddrs = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _dendrites[d].numS);
-		_dendrites[d].sPerms = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char)   * _dendrites[d].numS);
-
-		cs.getQueue().enqueueFillBuffer(_dendrites[d].sAddrs, static_cast<cl_ushort>(_sAddrMax), 0, sizeof(cl_ushort) * _dendrites[d].numS);
-		cs.getQueue().enqueueFillBuffer(_dendrites[d].sPerms, static_cast<cl_char>(0),           0, sizeof(cl_char)   * _dendrites[d].numS);
-	}
-
-	_nBoosts   = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_ushort) * _numN);
-	_nPredicts = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
-	_nActives  = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
-	_nOverlaps = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char) * _numN);
-	_inhibitFlag = cl::Buffer(cs.getContext(), CL_MEM_READ_WRITE, sizeof(cl_char));
-
-	cs.getQueue().enqueueFillBuffer(_nBoosts,   static_cast<cl_ushort>(0), 0, sizeof(cl_ushort) * _numN);
-	cs.getQueue().enqueueFillBuffer(_nPredicts, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
-	cs.getQueue().enqueueFillBuffer(_nActives,  static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
-	cs.getQueue().enqueueFillBuffer(_nOverlaps, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
-	cs.getQueue().enqueueFillBuffer(_inhibitFlag, static_cast<cl_char>(0), 0, sizeof(cl_char));
-
-	// Initialize Kernels
 	_overlapDendrites = cl::Kernel(cp.getProgram(), "overlapDendrites");
 	_learnSynapses    = cl::Kernel(cp.getProgram(), "learnSynapses");
 	_activateNeurons  = cl::Kernel(cp.getProgram(), "activateNeurons");
@@ -63,54 +57,54 @@ Area::Area(
 	_decodeNeurons    = cl::Kernel(cp.getProgram(), "decodeNeurons");
 }
 
-void Area::encode(ComputeSystem &cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
+void Area::encode(ComputeSystem &cs, std::vector<Pattern> patterns)
 {
-	cs.getQueue().enqueueFillBuffer(_nOverlaps, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
+	cs.getQueue().enqueueFillBuffer(_nOverlaps, _zeroOverlaps, 0, _sizeOverlaps);
 
 	// Overlap Dendrites
-	for (unsigned int i = 0; i < dNums.size(); i++)
+	for (unsigned int d = 0; d < _numDpN; d++)
 	{
-		_overlapDendrites.setArg(0, _nOverlaps);
-		_overlapDendrites.setArg(1, _patterns[pNums[i]].values);
-		_overlapDendrites.setArg(2, _dendrites[dNums[i]].sAddrs);
-		_overlapDendrites.setArg(3, _dendrites[dNums[i]].sPerms);
-		_overlapDendrites.setArg(4, _dendrites[dNums[i]].numSperD);
-		_overlapDendrites.setArg(5, _dendrites[dNums[i]].dThresh);
+		_overlapDendrites.setArg(0, patterns[d].nStates);
+		_overlapDendrites.setArg(1, _nOverlaps);
+		_overlapDendrites.setArg(2, _forests[d].sAddrs);
+		_overlapDendrites.setArg(3, _forests[d].sPerms);
+		_overlapDendrites.setArg(4, _forests[d].numSpD);
+		_overlapDendrites.setArg(5, _forests[d].dThresh);
 
-		_range = cl::NDRange(_numN);
+		_range = cl::NDRange(_numNpA);
 		cs.getQueue().enqueueNDRangeKernel(_overlapDendrites, cl::NullRange, _range);
 		cs.getQueue().finish();
 	}
 
 	// Neuron Activation
-	cs.getQueue().enqueueFillBuffer(_nActives, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
-	cs.getQueue().enqueueFillBuffer(_inhibitFlag, static_cast<cl_char>(0), 0, sizeof(cl_char));
+	cs.getQueue().enqueueFillBuffer(_nStates, _zeroStates, 0, _sizeStates);
+	cs.getQueue().enqueueFillBuffer(_inhibitFlag, _zeroInhibitFlag, 0, _sizeInhibitFlag);
 
-	cl_uint nThresh = static_cast<cl_uint>(dNums.size()); // consider making a function parameter
+	cl_uint nThresh = static_cast<cl_uint>(_numDpN);
 
 	_activateNeurons.setArg(0, _nBoosts);
-	_activateNeurons.setArg(1, _nActives);
+	_activateNeurons.setArg(1, _nStates);
 	_activateNeurons.setArg(2, _nOverlaps);
 	_activateNeurons.setArg(3, _inhibitFlag);
-	_activateNeurons.setArg(4, _sAddrMax);
+	_activateNeurons.setArg(4, _MAX_ADDR);
 	_activateNeurons.setArg(5, nThresh);
 
-	_range = cl::NDRange(_numN);
+	_range = cl::NDRange(_numNpA);
 	cs.getQueue().enqueueNDRangeKernel(_activateNeurons, cl::NullRange, _range);
 	cs.getQueue().finish();
 
 	cl_char inhibitFlagArr[1];
 
-	cs.getQueue().enqueueReadBuffer(_inhibitFlag, CL_TRUE, 0, sizeof(cl_char), &inhibitFlagArr, NULL);
+	cs.getQueue().enqueueReadBuffer(_inhibitFlag, CL_TRUE, 0, _sizeInhibitFlag, &inhibitFlagArr, NULL);
 
 	// Neuron Inhibition
 	if (inhibitFlagArr[0] == 0)
 	{
-		cl_ushort nBoostsArr[_numN];
-		cl_char nActivesArr[_numN];
+		cl_ushort nBoostsArr[_numNpA];
+		cl_char nStatesArr[_numNpA];
 
-		cs.getQueue().enqueueReadBuffer(_nBoosts, CL_TRUE, 0, sizeof(cl_ushort) * _numN, &nBoostsArr, NULL);
-		cs.getQueue().enqueueReadBuffer(_nActives, CL_TRUE, 0, sizeof(cl_char) * _numN, &nActivesArr, NULL);
+		cs.getQueue().enqueueReadBuffer(_nBoosts, CL_TRUE, 0, _sizeBoosts, &nBoostsArr, NULL);
+		cs.getQueue().enqueueReadBuffer(_nStates, CL_TRUE, 0, _sizeStates, &nStatesArr, NULL);
 
 		for (unsigned int an = 0; an < _numAN; an++)
 		{
@@ -118,7 +112,7 @@ void Area::encode(ComputeSystem &cs, std::vector<unsigned int> pNums, std::vecto
 			unsigned int maxIndex = 0;
 
 			// get max value
-			for (unsigned int n = 0; n < _numN; n++)
+			for (unsigned int n = 0; n < _numNpA; n++)
 			{
 				if (nBoostsArr[n] > maxValue)
 				{
@@ -127,134 +121,156 @@ void Area::encode(ComputeSystem &cs, std::vector<unsigned int> pNums, std::vecto
 				}
 			}
 
-			nActivesArr[maxIndex] = 1;
+			nStatesArr[maxIndex] = 1;
 			nBoostsArr[maxIndex] = 0;
 		}
 
-		cs.getQueue().enqueueWriteBuffer(_nBoosts, CL_TRUE, 0, sizeof(cl_ushort) * _numN, nBoostsArr);
-		cs.getQueue().enqueueWriteBuffer(_nActives, CL_TRUE, 0, sizeof(cl_char) * _numN, nActivesArr);
+		cs.getQueue().enqueueWriteBuffer(_nBoosts, CL_TRUE, 0, _sizeBoosts, nBoostsArr);
+		cs.getQueue().enqueueWriteBuffer(_nStates, CL_TRUE, 0, _sizeStates, nStatesArr);
 	}
 }
 
-void Area::learn(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
+void Area::learn(ComputeSystem& cs, std::vector<Pattern> patterns)
 {
-	for (unsigned int i = 0; i < dNums.size(); i++)
+	for (unsigned int d = 0; d < _numDpN; d++)
 	{
-		_learnSynapses.setArg(0, _patterns[pNums[i]].values);
-		_learnSynapses.setArg(1, _patterns[pNums[i]].numV);
-		_learnSynapses.setArg(2, _dendrites[dNums[i]].sAddrs);
-		_learnSynapses.setArg(3, _dendrites[dNums[i]].sPerms);
-		_learnSynapses.setArg(4, _dendrites[dNums[i]].numSperD);
-		_learnSynapses.setArg(5, _nActives);
-		_learnSynapses.setArg(6, _sPermMax);
+		_learnSynapses.setArg(0, patterns[d].nStates);
+		_learnSynapses.setArg(1, patterns[d].numN);
+		_learnSynapses.setArg(2, _forests[d].sAddrs);
+		_learnSynapses.setArg(3, _forests[d].sPerms);
+		_learnSynapses.setArg(4, _forests[d].numSpD);
+		_learnSynapses.setArg(5, _nStates);
+		_learnSynapses.setArg(6, _MAX_PERM);
 
-		_range = cl::NDRange(_numN);
+		_range = cl::NDRange(_numNpA);
 		cs.getQueue().enqueueNDRangeKernel(_learnSynapses, cl::NullRange, _range);
 		cs.getQueue().finish();
 	}
 }
 
-void Area::predict(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
+void Area::predict(ComputeSystem& cs, std::vector<Pattern> patterns, std::vector<unsigned int> forests)
 {
-	cs.getQueue().enqueueFillBuffer(_nOverlaps, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
-	cs.getQueue().enqueueFillBuffer(_nPredicts, static_cast<cl_char>(0), 0, sizeof(cl_char) * _numN);
+	cs.getQueue().enqueueFillBuffer(_nOverlaps, _zeroOverlaps, 0, _sizeOverlaps);
+	cs.getQueue().enqueueFillBuffer(_nStates, _zeroStates, 0, _sizeStates);
 
 	// Overlap Dendrites
-	for (unsigned int i = 0; i < dNums.size(); i++)
+	for (unsigned int i = 0; i < forests.size(); i++)
 	{
-		_overlapDendrites.setArg(0, _nOverlaps);
-		_overlapDendrites.setArg(1, _patterns[pNums[i]].values);
-		_overlapDendrites.setArg(2, _dendrites[dNums[i]].sAddrs);
-		_overlapDendrites.setArg(3, _dendrites[dNums[i]].sPerms);
-		_overlapDendrites.setArg(4, _dendrites[dNums[i]].numSperD);
-		_overlapDendrites.setArg(5, _dendrites[dNums[i]].dThresh);
+		_overlapDendrites.setArg(0, patterns[i].nStates);
+		_overlapDendrites.setArg(1, _nOverlaps);
+		_overlapDendrites.setArg(2, _forests[forests[i]].sAddrs);
+		_overlapDendrites.setArg(3, _forests[forests[i]].sPerms);
+		_overlapDendrites.setArg(4, _forests[forests[i]].numSpD);
+		_overlapDendrites.setArg(5, _forests[forests[i]].dThresh);
 
-		_range = cl::NDRange(_numN);
+		_range = cl::NDRange(_numNpA);
 		cs.getQueue().enqueueNDRangeKernel(_overlapDendrites, cl::NullRange, _range);
 		cs.getQueue().finish();
 	}
 
 	// Predict Neurons
-	cl_uint nThresh = static_cast<cl_uint>(dNums.size()); // consider making a function parameter
+	cl_uint nThresh = static_cast<cl_uint>(forests.size());
 
-	_predictNeurons.setArg(0, _nPredicts);
+	_predictNeurons.setArg(0, _nStates);
 	_predictNeurons.setArg(1, _nOverlaps);
 	_predictNeurons.setArg(2, nThresh);
 
-	_range = cl::NDRange(_numN);
+	_range = cl::NDRange(_numNpA);
 	cs.getQueue().enqueueNDRangeKernel(_predictNeurons, cl::NullRange, _range);
 	cs.getQueue().finish();
 }
 
-void Area::decode(ComputeSystem& cs, std::vector<unsigned int> pNums, std::vector<unsigned int> dNums)
+void Area::decode(ComputeSystem& cs, std::vector<Pattern> patterns, std::vector<unsigned int> forests)
 {
-	for (unsigned int i = 0; i < dNums.size(); i++)
+	for (unsigned int i = 0; i < forests.size(); i++)
 	{
-		cs.getQueue().enqueueFillBuffer(_patterns[pNums[i]].values, static_cast<cl_char>(0), 0, sizeof(cl_char) * _patterns[pNums[i]].numV);
+		cs.getQueue().enqueueFillBuffer(patterns[i].nStates, static_cast<cl_char>(0), 0, sizeof(cl_char) * patterns[i].numN);
 
-		_decodeNeurons.setArg(0, _patterns[pNums[i]].values);
-		_decodeNeurons.setArg(1, _nPredicts);
-		_decodeNeurons.setArg(2, _dendrites[dNums[i]].sAddrs);
+		_decodeNeurons.setArg(0, patterns[i].nStates);
+		_decodeNeurons.setArg(1, _nStates);
+		_decodeNeurons.setArg(2, _forests[forests[i]].sAddrs);
+		_decodeNeurons.setArg(3, _forests[forests[i]].sPerms);
+		_decodeNeurons.setArg(4, _forests[forests[i]].numSpD);
 
-		_range = cl::NDRange(_numN);
+		_range = cl::NDRange(_numNpA);
 		cs.getQueue().enqueueNDRangeKernel(_decodeNeurons, cl::NullRange, _range);
 		cs.getQueue().finish();
 	}
 }
 
-void Area::setPattern(ComputeSystem& cs, unsigned int p, std::vector<char> vec)
+std::vector<unsigned char> Area::getStates(ComputeSystem &cs)
 {
-	cs.getQueue().enqueueWriteBuffer(_patterns[p].values, CL_TRUE, 0, sizeof(cl_char) * _patterns[p].numV, vec.data());
-}
-
-void Area::setPatternFromActiveNeurons(ComputeSystem& cs, unsigned int p)
-{
-	cs.getQueue().enqueueCopyBuffer(_nActives, _patterns[p].values, 0, 0, sizeof(cl_char) * _numN);
-}
-
-void Area::setPatternFromPredictNeurons(ComputeSystem& cs, unsigned int p)
-{
-	cs.getQueue().enqueueCopyBuffer(_nPredicts, _patterns[p].values, 0, 0, sizeof(cl_char) * _numN);
-}
-
-std::vector<char> Area::getPattern(ComputeSystem &cs, unsigned int p)
-{
-	std::vector<char> vec(_patterns[p].numV);
-	cs.getQueue().enqueueReadBuffer(_patterns[p].values, CL_TRUE, 0, sizeof(cl_char) * _patterns[p].numV, vec.data(), NULL);
+	std::vector<unsigned char> vec(_numNpA);
+	cs.getQueue().enqueueReadBuffer(_nStates, CL_TRUE, 0, _sizeStates, vec.data(), NULL);
 	return vec;
 }
 
-std::vector<unsigned short> Area::getSynapseAddrs(ComputeSystem &cs, unsigned int d)
+std::vector<unsigned short> Area::getBoosts(ComputeSystem &cs)
 {
-	std::vector<unsigned short> vec(_dendrites[d].numS);
-	cs.getQueue().enqueueReadBuffer(_dendrites[d].sAddrs, CL_TRUE, 0, sizeof(cl_ushort) * _dendrites[d].numS, vec.data(), NULL);
+	std::vector<unsigned short> vec(_numNpA);
+	cs.getQueue().enqueueReadBuffer(_nBoosts, CL_TRUE, 0, _sizeBoosts, vec.data(), NULL);
 	return vec;
 }
 
-std::vector<char> Area::getSynapsePerms(ComputeSystem &cs, unsigned int d)
+std::vector<unsigned short> Area::getAddrs(ComputeSystem &cs, unsigned int f)
 {
-	std::vector<char> vec(_dendrites[d].numS);
-	cs.getQueue().enqueueReadBuffer(_dendrites[d].sPerms, CL_TRUE, 0, sizeof(cl_char) * _dendrites[d].numS, vec.data(), NULL);
+	std::vector<unsigned short> vec(_forests[f].numSpF);
+	cs.getQueue().enqueueReadBuffer(_forests[f].sAddrs, CL_TRUE, 0, _forests[f].sizeAddrs, vec.data(), NULL);
 	return vec;
 }
 
-std::vector<char> Area::getNeuronActives(ComputeSystem &cs)
+std::vector<unsigned char> Area::getPerms(ComputeSystem &cs, unsigned int f)
 {
-	std::vector<char> vec(_numN);
-	cs.getQueue().enqueueReadBuffer(_nActives, CL_TRUE, 0, sizeof(cl_char) * _numN, vec.data(), NULL);
+	std::vector<unsigned char> vec(_forests[f].numSpF);
+	cs.getQueue().enqueueReadBuffer(_forests[f].sPerms, CL_TRUE, 0, _forests[f].sizePerms, vec.data(), NULL);
 	return vec;
 }
 
-std::vector<char> Area::getNeuronPredicts(ComputeSystem &cs)
+void Area::printStates(ComputeSystem& cs)
 {
-	std::vector<char> vec(_numN);
-	cs.getQueue().enqueueReadBuffer(_nPredicts, CL_TRUE, 0, sizeof(cl_char) * _numN, vec.data(), NULL);
-	return vec;
+	std::vector<unsigned char> vec(_numNpA);
+	cs.getQueue().enqueueReadBuffer(_nStates, CL_TRUE, 0, _sizeStates, vec.data(), NULL);
+
+	printf("\nStates: ");
+
+	for (unsigned int i = 0; i < _numNpA; i++)
+		printf("%i ", vec[i]);
 }
 
-std::vector<unsigned short> Area::getNeuronBoosts(ComputeSystem &cs)
+void Area::printBoosts(ComputeSystem& cs)
 {
-	std::vector<unsigned short> vec(_numN);
-	cs.getQueue().enqueueReadBuffer(_nBoosts, CL_TRUE, 0, sizeof(cl_ushort) * _numN, vec.data(), NULL);
-	return vec;
+	std::vector<unsigned short> vec(_numNpA);
+	cs.getQueue().enqueueReadBuffer(_nBoosts, CL_TRUE, 0, _sizeBoosts, vec.data(), NULL);
+
+	printf("\nBoosts: ");
+
+	for (unsigned int i = 0; i < _numNpA; i++)
+		printf("%i ", vec[i]);
+}
+
+void Area::printAddrs(ComputeSystem& cs, unsigned int f)
+{
+	std::vector<unsigned short> vec(_forests[f].numSpF);
+	cs.getQueue().enqueueReadBuffer(_forests[f].sAddrs, CL_TRUE, 0, _forests[f].sizeAddrs, vec.data(), NULL);
+
+	printf("\nAddrs%i: ", f);
+
+	for (unsigned int i = 0; i < _forests[f].numSpF; i++)
+	{
+		if (vec[i] > 999)
+			printf("XXX ");
+		else
+			printf("%i ", vec[i]);
+	}
+}
+
+void Area::printPerms(ComputeSystem& cs, unsigned int f)
+{
+	std::vector<unsigned char> vec(_forests[f].numSpF);
+	cs.getQueue().enqueueReadBuffer(_forests[f].sPerms, CL_TRUE, 0, _forests[f].sizePerms, vec.data(), NULL);
+
+	printf("\nPerms%i: ", f);
+
+	for (unsigned int i = 0; i < _forests[f].numSpF; i++)
+		printf("%i ", vec[i]);
 }
