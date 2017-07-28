@@ -1,76 +1,58 @@
 # Simple Cortex
 
-Simple Cortex (SC) is an unsupervised on-line learning machine intelligence architecture based on intelligence principles of the mammalian neocortex.  The work is heavily inspired by Numenta's Hierarchical Temporal Memory (HTM), a theoretical framework of neocortex for both biological and machine intelligence.  Simple Cortex uses OpenCL for fast parallel computation.
+Simple Cortex (SC) is an unsupervised online learning machine intelligence architecture based on intelligence principles of the mammalian neocortex.  The work is heavily inspired by Numenta's Hierarchical Temporal Memory (HTM) Theory, a theoretical framework of neocortex for both biological and machine intelligence.  Simple Cortex use OpenCL for fast parallel computation.
 
-## Functionality
+## Demos
 
-Simple Cortex can learn and predict any type of binary input pattern.
-
-Input patterns may contain sensory or motor information as well as temporal information
-
-Prediction Beyond one time step into the future.
-
-Intention of upgrading the capabilities to learning floating-point inputs.
+- [Ball 1.0](https://www.youtube.com/watch?v=Az5HldJHbKc)
+- [Ball 2.0](https://www.youtube.com/watch?v=iRt8sVPZkss)
 
 ## Architecture
 
-Simple Cortex architecture is inspired by the networked hierarchy of interacting structures found in the mammalian neocortex.
+Simple Cortex offers a straightforward and robust architecture for learning and predicting spatio-temporal sensory-motor patterns and sequences.  The algorithms are inspired by the hierarchy of interacting structures found in the mammalian neocortex.  Fundamentally, these structures are networked sensors with memory that respond to concurrent stimulation.  Advanced network architectures like the neocortex not only observe an environment through "bottom-up" sensing, but also make sense of the environment through "top-down" perception, expectation, and prediction of what's in the environment.  This "top-down" perception allows intelligent systems to have sophisticated awareness of and interaction in an environment.  Simple Cortex may use both "bottom-up" and "top-down" stimulation.  Therefore, the possibile solutions of a suitably sophisticated SC implementation are endless.
+
+As the name implies, the architecture is simple:
+
+![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/sc.png)
+
+#### Stimulation
+
+A SC stimulae is simply a data vector that represents a detectable change in an environment.  This can be literally anything: light brightness, sound waves, actuator positions, etc.  The interacting network of sensors in the brain discussed above communicate with each other by using neuron activations stimulae.  Therefore because the data is so versitile, SC can learn any type of pattern or sequence in an environment or within the intelligent architecture itself.  For now SC only processes binary(0 or 1) stimulae, but a future upgrade will allow SC to observe and learn from scalar data vectors.
 
 #### Synapse
 
-A SC synapse is the most fundamental memory storage unit.  In the neocortex synapses grow towards and connect to 
+A SC synapse is the most fundamental memory storage and learning unit.  Like the neocortex and HTM theory, SC synapses grow towards active neurons and shrink away from inactive neurons.  A "connected" synapse responds to neuronal stimulus while a "unconnected" synapse is unaffected by neuronal stimulus.  Synapses grow towards consistantly reoccouring neurons tend to be very strongly locked to that neuron while unconnected synapses often change their connection.  This is the basis of Hebbian Learning.
 
 Each synapse has:
-- Address: represents the presynaptic connection, or what input node or neuron the synapse is connected to.
-- Permanence: represents how well the synapse is connected.  Unlike HTM Theory synapses are always connected to the presynaptic connection.
+- Address: represents the presynaptic stimulus a synapse is connected to.
+- Permanence: represents how well the synapse is connected to its address.  Uses scalar value from 0 to 99.
+
+Synaptic learning rules include:
+- Grow: Increment the synapse permanence if a pre-synaptic connection is active,.
+- Shrink: Decrement the synapse permanence if a pre-synaptic connection is inactive.
+- Switch: If a synapse permanence is 0 (representing an unconnected synapse), set the synapse address to an unused pre-synaptic connection and reset the synapse permanance to 1.
 
 #### Dendrite
 
-A SC "dendrite" is a collection of synapses formimg a coincidence detector.  When enough of these synapses become active at one time step, the dentrite is active and represents the occourance of a pattern.
+A SC dendrite is a collection of synapses and a threshold that forms a coincidence detector.  When enough of these synapses become active at one time step and are greater than the dendrite's threshold value, the dentrite is active.  This represents the occourance of a pattern, or reoccouring stimulae.  A dendrite may have as many synpases as required.
 
-#### (Dendritic) Tree
+#### Forest
 
-A SC "tree" is a collection of dendrites that observe and learn from a common pattern.
+A SC forest is a collection of dendrites that respond to and learn from a common stimulae.  The forest structure simplifies the code and allows for more efficient parallelization.
 
 #### Neuron
 
-A SC "neuron" is a collection of dendrites whos activation implies the occourance of 
-
-modeled by pyramidal neurons found in the mammalian neocortex and modeled in HTM theory.
+A SC neuron is loosely modeled by pyramidal neurons found in the mammalian neocortex and in HTM theory.  Much like the dendrite model explained above, a neuron is a collection of dendrites and a threshold that forms a coincidence detector.  Since an active dendrite represents the occourance of a pattern, when enough of these patterns are recognized at one time step the neuron is active.  An active neuron represents the occourance of one or more patterns depending on how many dendrites connect to a neuron.  This means that even when a dendrite was not activated by its observed stimulae, the activation of the neuron implies that the stimulae was expected or predicted.  A neuron may have as many dendrites as required.
 
 #### Area
 
-A SC "area" is a collection of neurons 
+A SC area is simply a collection of neurons.  In the neocortex this is equivalent to "cortical columns", or "macrocolumns".  An area may have as many neurons as required.
 
 #### Region
 
-A SC "region" is a collection of areas.  
+A SC region is a collection of areas.  In the neocortex this is equivalent to brain regions like V1 or M1, etc.
 
-The equivalent of V1 or M1, etc
-
-## Core Algorithms
-
-#### Overlap Dendrites
-
-A synapse is actived if its presynaptic connection is active and its permenence is greater than or equal to the synaptic permanence threshold.  A dendrite is active if the number of active synapses is greater than or equal to the dendritic activation threshold.
-
-#### Learn Synapses
-
-If learning is enabled and when a dendrite segment is marked for learning its synapses undergo one of four learning rules:
-
-1. Grow: If the pre-synaptic connection is active, increase the synapse permanence by the learning rate.
-2. Shrink: If the pre-synaptic connection is inactive, decrease the synapse permanence by the learning rate.
-3. Birth: If the synapse is unused (address at max value) and there's an unused active input, insert the synapse by setting the synapse address to the unused input and the synapse permanence to the threshold.
-4. Death: If the synapse permanence falls to zero, remove the synapse (set synapse address to max address value).
-
-#### Activate Neurons
-
-inhibition
-
-#### Predict Neurons
-
-## To Do List
+## Future Improvements
+- Upgrade algorithms to allow for observing and learning from scalar data vectors
 - Optimize learnSynapses kernel
 - Figure out better inhibitFlag variable
-- make ball demo video
-- write paper
