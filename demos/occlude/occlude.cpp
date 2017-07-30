@@ -1,10 +1,12 @@
-// ========
-// ball.cpp
-// ========
+// ===========
+// occlude.cpp
+// ===========
 
-#include "ball.h"
+#include "occlude.h"
 #include "compute/compute-system.h"
 #include "compute/compute-program.h"
+#include "utils/utils.h"
+#include "utils/input-image.h"
 #include "utils/render2d.h"
 #include "cortex/pattern.h"
 #include "cortex/area.h"
@@ -14,18 +16,15 @@
 int main()
 {
 	// Setup SFML render window and ball simulation
-	unsigned int sizeSceneX = 100; //21
-	unsigned int sizeSceneY = 100; //21
-	unsigned int scaleScene = 4; //20
-	unsigned int ballRadius = 4; //1
+	unsigned int sizeSceneX = 100;
+	unsigned int sizeSceneY = 100;
+	unsigned int scaleScene = 2;
 	unsigned int sizeDisplayX = sizeSceneX * scaleScene;
 	unsigned int sizeDisplayY = sizeSceneY * scaleScene;
 	unsigned int numPixels = sizeSceneX * sizeSceneY;
 
 	sf::RenderWindow window;
 	window.create(sf::VideoMode(sizeDisplayX, sizeDisplayY), "Simple Cortex - Ball Demo 2.0", sf::Style::Default); // title
-
-	Ball ball(sizeSceneX, sizeSceneY, ballRadius);
 
 	Render2D scene(sizeSceneX, sizeSceneY);
 	scene.setPosition(sizeDisplayX / 2, sizeDisplayY / 2);
@@ -34,6 +33,21 @@ int main()
 	std::vector<float> rVec(numPixels);
 	std::vector<float> gVec(numPixels);
 	std::vector<float> bVec(numPixels);
+
+	// Setup input images
+	std::string fileBox      = "resources/box.png";
+	std::string fileCircle   = "resources/circle.png";
+	std::string fileCircle2  = "resources/circle2.png";
+	std::string fileDuck     = "resources/duck.png";
+	std::string fileDude     = "resources/dude.png";
+	std::string fileHeart    = "resources/heart.png";
+	std::string fileSquare   = "resources/square.png";
+	std::string fileTriangle = "resources/triangle.png";
+	std::string fileUparrow  = "resources/uparrow.png";
+	std::string fileX        = "resources/x.png";
+
+	InputImage imgBox(fileBox);
+
 
 	// Setup OpenCL
 	ComputeSystem cs;
@@ -46,11 +60,11 @@ int main()
 	cp.loadFromSourceFile(cs, kernels_cl);
 
 	// Setup Simple Cortex Area
-	unsigned int numNeurons = 65000; //20
-	unsigned int numForecasts = 20;
+	unsigned int numNeurons = 20;
+//	unsigned int numForecasts = 20;
 
-	std::vector<unsigned char> resetNeuronsVec(numNeurons);
-	resetNeuronsVec[numNeurons - 1] = 1;
+//	std::vector<unsigned char> resetNeuronsVec(numNeurons);
+//	resetNeuronsVec[numNeurons - 1] = 1;
 
 	std::vector<Pattern> patterns(4);
 	patterns[0].init(cs, numPixels);  // input - current binary scene state
@@ -111,8 +125,7 @@ int main()
 				bVec[p] = 0.0f;
 			}
 
-			ball.step();
-
+			/*
 			patterns[0].setStates(cs, ball.getBinaryVector());
 
 			if (ball.getStartSequence())
@@ -139,13 +152,15 @@ int main()
 						bVec[p] = 0.2f + 0.04f * i;
 				}
 			}
+			*/
 
-			std::vector<unsigned char> input = patterns[0].getStates(cs);
+//			std::vector<unsigned char> input = patterns[0].getStates(cs);
+			std::vector<utils::Vec4f> test = imgBox.getPixels();
 
 			for (unsigned int p = 0; p < numPixels; p++)
 			{
-				if (input[p] > 0)
-					gVec[p] = 1.0f;
+//				if (input[p] > 0)
+					gVec[p] = test[p].g;
 			}
 
 			scene.setPixels(rVec, gVec, bVec);
