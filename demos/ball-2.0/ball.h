@@ -47,15 +47,23 @@ public:
 private:
 	void reset()
 	{
-		float percent = 0.50;
+//		float percent = 0.50;
 
-		unsigned int limitX = _sizeSceneX * percent;
-		unsigned int limitY = _sizeSceneY * percent;
+//		unsigned int limitX = _sizeSceneX * percent;
+//		unsigned int limitY = _sizeSceneY * percent;
 
-		_positionX = (float)(utils::getRandomInt(0 + _radius + limitX, _sizeSceneX - 1 - _radius - limitX));
-		_positionY = (float)(utils::getRandomInt(0 + _radius + limitY, _sizeSceneY - 1 - _radius - limitY));
+//		_positionX = (float)(utils::getRandomInt(0 + _radius + limitX, _sizeSceneX - 1 - _radius - limitX));
+//		_positionY = (float)(utils::getRandomInt(0 + _radius + limitY, _sizeSceneY - 1 - _radius - limitY));
 
-		_velocityX = (float)(utils::getRandomInt(-1, 1) * 5);
+		_positionX = (float)(_sizeSceneX / 2);
+		_positionY = (float)(_sizeSceneY / 2);
+
+//		_positionX = (float)(utils::getRandomInt(0 + _radius, _sizeSceneX - 1 - _radius));
+//		_positionY = (float)(utils::getRandomInt(0 + _radius, _sizeSceneY - 1 - _radius));
+
+		_velocityX = utils::getRandomFloat(-5.0f, 5.0f);
+
+//		_velocityX = (float)(utils::getRandomInt(-1, 1) * 5);
 		_velocityY = 0.0f;
 
 		_acceleration = 1.0f;

@@ -6,7 +6,8 @@
 #include "compute/compute-system.h"
 #include "compute/compute-program.h"
 #include "utils/render2d.h"
-#include "cortex/pattern.h"
+#include "cortex/stimulae.h"
+#include "cortex/forest.h"
 #include "cortex/area.h"
 
 #include <vector>
@@ -14,16 +15,16 @@
 int main()
 {
 	// Setup SFML render window and ball simulation
-	unsigned int sizeSceneX = 100; //21
-	unsigned int sizeSceneY = 100; //21
-	unsigned int scaleScene = 4; //20
-	unsigned int ballRadius = 4; //1
-	unsigned int sizeDisplayX = sizeSceneX * scaleScene;
-	unsigned int sizeDisplayY = sizeSceneY * scaleScene;
+	unsigned int sizeSceneX = 100; // pixels
+	unsigned int sizeSceneY = 100; // pixels
+	unsigned int scaleScene = 4;
+	unsigned int ballRadius = 4;
+	unsigned int sizeDisplayX = sizeSceneX * scaleScene; // pixels
+	unsigned int sizeDisplayY = sizeSceneY * scaleScene; // pixels
 	unsigned int numPixels = sizeSceneX * sizeSceneY;
 
 	sf::RenderWindow window;
-	window.create(sf::VideoMode(sizeDisplayX, sizeDisplayY), "Simple Cortex - Ball Demo 2.0", sf::Style::Default); // title
+	window.create(sf::VideoMode(sizeDisplayX, sizeDisplayY), "Simple Cortex - Ball Demo 2.0", sf::Style::Default);
 
 	Ball ball(sizeSceneX, sizeSceneY, ballRadius);
 
@@ -39,35 +40,50 @@ int main()
 	ComputeSystem cs;
 	ComputeProgram cp;
 
-	std::string kernels_cl = "source/cortex/area.cl";
+	std::string kernels_cl = "source/cortex/behavior.cl";
 
 	cs.init(ComputeSystem::_gpu);
 	cs.printCLInfo();
 	cp.loadFromSourceFile(cs, kernels_cl);
 
 	// Setup Simple Cortex Area
-	unsigned int numNeurons = 65000; //20
-	unsigned int numForecasts = 20;
+	unsigned int numStimulae = 4;
+	unsigned int numForests = 2;
+	unsigned int numNeurons = 1500000; 
 
-	std::vector<unsigned char> resetNeuronsVec(numNeurons);
-	resetNeuronsVec[numNeurons - 1] = 1;
+	// NEED TO FIGURE THIS OUT!!!
+	// Getting segfaults at random beyond 1,600,000 neurons...
+	// Using unsigned int for neuron addressing
+	// 1.5 mil neurons x 32 bits = 6 MB per uint buffer
+	// well under GTX 1070 max buffer size...
+	// Otherwise smooth operating
 
-	std::vector<Pattern> patterns(4);
-	patterns[0].init(cs, numPixels);  // input - current binary scene state
-	patterns[1].init(cs, numNeurons); // input - previous neuron activations
-	patterns[2].init(cs, numNeurons); // input - storage of current neuron activations for forecasting
-	patterns[3].init(cs, numPixels);  // output - predicted future binary scene state
+	std::vector<Stimulae> vecStimulae(numStimulae);
+	vecStimulae[0].init(cs, numPixels);  // input - current binary scene state
+	vecStimulae[1].init(cs, numNeurons); // input - previous neuron activations
+	vecStimulae[2].init(cs, numNeurons); // input - storage of current neuron activations for forecasting
+	vecStimulae[3].init(cs, numPixels);  // output - predicted future binary scene state
+
+	std::vector<Forest> vecForest(numForests);
+	vecForest[0].init(cs, cp, numNeurons, 50, 0.75f);
+	vecForest[1].init(cs, cp, numNeurons,  1, 1.00f);
 
 	Area area;
-	area.init(cs, cp, numNeurons, {50, 1});
+	area.init(cs, cp, numNeurons);
+
+	std::vector<unsigned char> vecResetNeurons(numNeurons);
+	vecResetNeurons[numNeurons - 1] = 1;
 
 	// Render loop
-	bool quit = false;
+	bool forecast = false;
+	bool stepMode = true;
 	bool step = true;
-	bool pause = false;
+	bool quit = false;
 
+	printf("\nLearning %i Neurons each with %i Dendrites", numNeurons, numForests);
+	printf("\nPress 'f' to enable/disable forecasting");
+	printf("\nPress 'p' to enable/disable step mode");
 	printf("\nPress 'Space' to step algorithms");
-	printf("\nPress 'p' to pause/unpause running algorithms");
 	printf("\nPress 'Esc' to quit application");
 	printf("\n");
 
@@ -93,16 +109,17 @@ int main()
 						break;
 
 					case sf::Keyboard::P:
-						if (pause == true)
-							pause = false;
-						else
-							pause = true;
+						stepMode = !stepMode;
+						break;
+
+					case sf::Keyboard::F:
+						forecast = !forecast;
 						break;
 				}
 			}
 		}
 
-		if (step || pause)
+		if (!stepMode || step)
 		{
 			for (unsigned int p = 0; p < numPixels; p++)
 			{
@@ -113,34 +130,37 @@ int main()
 
 			ball.step();
 
-			patterns[0].setStates(cs, ball.getBinaryVector());
+			vecStimulae[0].setStates(cs, ball.getBinaryVector());
 
 			if (ball.getStartSequence())
-				patterns[1].setStates(cs, resetNeuronsVec);
+				vecStimulae[1].setStates(cs, vecResetNeurons);
 
-			area.encode(cs, {patterns[0], patterns[1]});
-			area.learn(cs, {patterns[0], patterns[1]});
+			area.encode(cs, {vecStimulae[0], vecStimulae[1]}, {vecForest[0], vecForest[1]});
+			area.learn(cs, {vecStimulae[0], vecStimulae[1]}, {vecForest[0], vecForest[1]});
 
-			patterns[1].setStates(cs, area.getStates(cs));
+			vecStimulae[1].setStates(cs, area.getStates(cs));
 
-			// Forecast the future
-			for (unsigned int i = 0; i < numForecasts; i++)
+			// Forecast 20 time steps into the future
+			if (forecast)
 			{
-				patterns[2].setStates(cs, area.getStates(cs));
-
-				area.predict(cs, {patterns[2]}, {1});
-				area.decode(cs, {patterns[3]}, {0});
-
-				std::vector<unsigned char> prediction = patterns[3].getStates(cs);
-
-				for (unsigned int p = 0; p < numPixels; p++)
+				for (unsigned int i = 0; i < 20; i++)
 				{
-					if (prediction[p] > 0)
-						bVec[p] = 0.2f + 0.04f * i;
+					vecStimulae[2].setStates(cs, area.getStates(cs));
+
+					area.predict(cs, {vecStimulae[2]}, {vecForest[1]});
+					area.decode(cs, {vecStimulae[3]}, {vecForest[0]});
+
+					std::vector<unsigned char> prediction = vecStimulae[3].getStates(cs);
+
+					for (unsigned int p = 0; p < numPixels; p++)
+					{
+						if (prediction[p] > 0)
+							bVec[p] = 0.2f + 0.04f * i;
+					}
 				}
 			}
 
-			std::vector<unsigned char> input = patterns[0].getStates(cs);
+			std::vector<unsigned char> input = vecStimulae[0].getStates(cs);
 
 			for (unsigned int p = 0; p < numPixels; p++)
 			{

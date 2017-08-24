@@ -7,7 +7,7 @@ EXECUTE = execute.exe
 
 all: $(EXECUTE)
 
-OBJS_E = occlude.o pattern.o area.o compute-system.o compute-program.o input-image.o
+OBJS_E = ball.o stimulae.o forest.o area.o compute-system.o compute-program.o input-image.o
 $(EXECUTE): $(OBJS_E)
 	$(CXX) $(LDLIBS) $(OBJS_E) -o $(EXECUTE)
 
@@ -19,19 +19,22 @@ PATH_D = ./demos/
 #ball.o: $(PATH_D)ball-1.0/ball.cpp
 #	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_D)ball-1.0/ball.cpp
 
-#ball.o: $(PATH_D)ball-2.0/ball.cpp
-#	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_D)ball-2.0/ball.cpp
+ball.o: $(PATH_D)ball-2.0/ball.cpp
+	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_D)ball-2.0/ball.cpp
 
-occlude.o: $(PATH_D)occlude/occlude.cpp
-	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_D)occlude/occlude.cpp
+#occlude.o: $(PATH_D)occlude/occlude.cpp
+#	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_D)occlude/occlude.cpp
 
 # ===========
 # Cortex
 # ===========
 PATH_A = ./source/cortex/
 
-pattern.o: $(PATH_A)pattern.cpp
-	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_A)pattern.cpp
+stimulae.o: $(PATH_A)stimulae.cpp
+	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_A)stimulae.cpp
+
+forest.o: $(PATH_A)forest.cpp
+	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_A)forest.cpp
 
 area.o: $(PATH_A)area.cpp
 	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_A)area.cpp

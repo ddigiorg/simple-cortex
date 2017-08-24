@@ -9,77 +9,65 @@
 
 #include "compute/compute-system.h"
 #include "compute/compute-program.h"
-#include "pattern.h"
+#include "stimulae.h"
+#include "forest.h"
 
 #include <vector>
-
-class Forest
-{
-	public:
-		cl_uint numSpD;  // number of synapses per dendrite
-		cl_uint numSpF;  // number of synapses per forest
-		cl_uint dThresh; // dendrite activation threshold
-
-		size_t sizeAddrs; // number of bits in buffer
-		size_t sizePerms; // number of bits in buffer
-
-		cl::Buffer sAddrs; // OpenCL buffer of ushorts (values from 0 to 65535)
-		cl::Buffer sPerms; // OpenCL buffer of chars (values from 0 to 99)
-};
 
 class Area
 {
 public:
+	void init(ComputeSystem& cs, ComputeProgram& cp, unsigned int numNpA);
 
-	void init(ComputeSystem &cs, ComputeProgram &cp, unsigned int numN, std::vector<unsigned int> numSpDs);
+	void encode (ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest);
+	void learn  (ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest);
+	void predict(ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest);
+	void decode (ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest);
 
-	void encode(ComputeSystem& cs, std::vector<Pattern> patterns);
-	void learn(ComputeSystem& cs, std::vector<Pattern> patterns);
-	void predict(ComputeSystem& cs, std::vector<Pattern> patterns, std::vector<unsigned int> forests);
-	void decode(ComputeSystem& cs, std::vector<Pattern> patterns, std::vector<unsigned int> forests);
-
-	std::vector<unsigned char> getStates(ComputeSystem& cs);
-	std::vector<unsigned short> getBoosts(ComputeSystem& cs);
-	std::vector<unsigned short> getAddrs(ComputeSystem& cs, unsigned int f);
-	std::vector<unsigned char> getPerms(ComputeSystem& cs, unsigned int f);
+	std::vector<unsigned char>  getStates(ComputeSystem& cs);
 
 	void printStates(ComputeSystem& cs);
-	void printBoosts(ComputeSystem& cs);
-	void printAddrs(ComputeSystem& cs, unsigned int f);
-	void printPerms(ComputeSystem& cs, unsigned int f);
 
 private:
-	const cl_uint _MAX_ADDR = static_cast<cl_ushort>(65535);
-	const cl_uint _MAX_PERM = static_cast<cl_char>(99);
+	void clearNBoosts(ComputeSystem& cs);
+	void clearNStates(ComputeSystem& cs);
+	void clearNOverlaps(ComputeSystem& cs);
+	void clearNInhibit(ComputeSystem& cs);
 
-	cl_ushort _zeroBoosts     = static_cast<cl_ushort>(0);
-	cl_uchar _zeroStates      = static_cast<cl_uchar>(0);
-	cl_uchar _zeroOverlaps    = static_cast<cl_uchar>(0);
-	cl_uchar _zeroInhibitFlag = static_cast<cl_uchar>(0);
-	cl_uchar _zeroAddrs       = static_cast<cl_uchar>(_MAX_ADDR);
-	cl_uchar _zeroPerms       = static_cast<cl_uchar>(0);
+	void overlapSynapses(ComputeSystem& cs, Stimulae stimulae, Forest forest);
+	void activateNeurons(ComputeSystem& cs);
+	void learnSynapses(ComputeSystem& cs, Stimulae stimulae, Forest forest);
+	void predictNeurons(ComputeSystem& cs);
+	void decodeNeurons(ComputeSystem& cs, Stimulae stimulae, Forest forest);
 
-	cl_uint _numNpA; // number of neurons per area (cant go over 65535 neurons unless synapse address variables are modified)
-	cl_uint _numDpN; // number of dendrites per neuron
-	cl_uint _numAN;  // number of active neurons during a single time step
+private:
+	const cl_uint _ZERO_UINT = static_cast<cl_uint>(0);
+	const cl_uint _S_ADDR_MAX = static_cast<cl_uint>(4294967295);
+	const cl_uchar _ZERO_UCHAR = static_cast<cl_uchar>(0);
+	const cl_uchar _S_PERM_MAX = static_cast<cl_char>(99);
 
-	size_t _sizeBoosts;      // number of bits in buffer
-	size_t _sizeStates;      // number of bits in buffer
-	size_t _sizeOverlaps;    // number of bits in buffer
-	size_t _sizeInhibitFlag; // number of bits in buffer
+	cl_uint _numNpA;  // number of neurons per area (cant go over 65535 neurons unless synapse address variables are modified)i // !!!
+	cl_uint _numDpN;  // number of dendrites per neuron
+	cl_uint _numAN;   // number of active neurons during a single time step
+	cl_uint _nThresh; // neuron activation threshold (how many active dendrites needed to activate neuron)
 
-	cl::Buffer _nBoosts;     // OpenCL buffer of ushorts (values from 0 to 65535)
-	cl::Buffer _nStates;     // OpenCL buffer of chars (values from 0 to 1)
-	cl::Buffer _nOverlaps;   // OpenCL buffer of chars (values from 0 to 255)
-	cl::Buffer _inhibitFlag; // OpenCL buffer of char (value from 0 to 1)
+	cl_uchar _inhibit;
 
-	std::vector<Forest> _forests;
+	size_t _numbytesNBoosts;
+	size_t _numbytesNStates;
+	size_t _numbytesNOverlaps;
+	size_t _numbytesInhibit;
 
-	cl::Kernel _overlapDendrites;
-	cl::Kernel _learnSynapses;
-	cl::Kernel _activateNeurons;
-	cl::Kernel _predictNeurons;
-	cl::Kernel _decodeNeurons;
+	cl::Buffer _bufferNBoosts;   // uints (values from 0 to 4,294,967,295)
+	cl::Buffer _bufferNStates;   // uchars (values from 0 to 1)
+	cl::Buffer _bufferNOverlaps; // uchars (values from 0 to 255)
+	cl::Buffer _bufferInhibit;   // uchar (value from 0 to 1)
+
+	cl::Kernel _kernelOverlapSynapses;
+	cl::Kernel _kernelActivateNeurons;
+	cl::Kernel _kernelLearnSynapses;
+	cl::Kernel _kernelPredictNeurons;
+	cl::Kernel _kernelDecodeNeurons;
 
 	cl::NDRange _range;
 };

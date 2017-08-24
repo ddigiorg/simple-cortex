@@ -1,14 +1,14 @@
-// =======
-// area.cl
-// =======
+// ==========
+// behavio.cl
+// ==========
 
-kernel void overlapDendrites(
-	global uchar* inputs,
+kernel void overlapSynapses(
 	global uchar* nOverlaps,
-	global ushort* sAddrs,
+	global uchar* sStates,
+	global uint* sAddrs,
 	global uchar* sPerms,
-	uint numSpD,
-	uint dThresh)
+	const uint numSpD,
+	const uint dThresh)
 {
 	uint n = get_global_id(0);
 
@@ -17,25 +17,46 @@ kernel void overlapDendrites(
 	uint s0 = n * numSpD;
 
 	for (uint s = s0; s < s0 + numSpD; s++)
-		if (sPerms[s] > 0 && inputs[sAddrs[s]] > 0)
+		if (sPerms[s] > 0 && sStates[sAddrs[s]] > 0)
 			dOverlap++;
 
 	if (dOverlap >= dThresh)
 		nOverlaps[n]++;
 }
 
-kernel void learnSynapses(
-	global uchar* inputs,
-	uint numIn,
-	global ushort* sAddrs,
-	global uchar* sPerms,
-	uint numSpD,
-	global uchar* nActives,
-	uint sPermMax)
+kernel void activateNeurons(
+	global ushort* nBoosts,
+	global uchar* nStates,
+	global uchar* nOverlaps,
+	global uchar* inhibit,
+	const uint sAddrMax,
+	const uint nThresh)
 {
 	uint n = get_global_id(0);
 
-	if (nActives[n] > 0)
+	if (nBoosts[n] < sAddrMax)
+		nBoosts[n]++;
+
+	if (nOverlaps[n] >= nThresh)
+	{
+		nBoosts[n] = 0;
+		nStates[n] = 1;
+		inhibit[0] = 1;
+	}
+}
+
+kernel void learnSynapses(
+	global uchar* sStates,
+	const uint numStimulus,
+	global uint* sAddrs,
+	global uchar* sPerms,
+	const uint numSpD,
+	global uchar* nStates,
+	const uchar sPermMax)
+{
+	uint n = get_global_id(0);
+
+	if (nStates[n] > 0)
 	{
 		uint j = 0;
 
@@ -44,7 +65,7 @@ kernel void learnSynapses(
 		{
 			if (sPerms[s] > 0)
 			{
-				if (inputs[sAddrs[s]] > 0)
+				if (sStates[sAddrs[s]] > 0)
 				{
 					if (sPerms[s] < sPermMax)
 						sPerms[s]++;
@@ -58,9 +79,9 @@ kernel void learnSynapses(
 		{
 			if (sPerms[s] == 0)
 			{
-				for (uint i = j; i < numIn; i++)
+				for (uint i = j; i < numStimulus; i++)
 				{
-					if (inputs[i] > 0)
+					if (sStates[i] > 0)
 					{
 						bool flag = true;
 
@@ -85,54 +106,34 @@ kernel void learnSynapses(
 	}
 }
 
-kernel void activateNeurons(
-	global ushort* nBoosts,
-	global uchar* nActives,
-	global uchar* nOverlaps,
-	global uchar* inhibitFlag,
-	uint sAddrMax,
-	uint nThresh)
-{
-	uint n = get_global_id(0);
-
-	if (nBoosts[n] < sAddrMax)
-		nBoosts[n]++;
-
-	if (nOverlaps[n] >= nThresh)
-	{
-		nActives[n] = 1;
-		nBoosts[n] = 0;
-		inhibitFlag[0] = 1;
-	}
-}
-
 kernel void predictNeurons(
-	global uchar* nActives,
+	global uchar* nStates,
 	global uchar* nOverlaps,
-	uint nThresh)
+	const uint nThresh)
 {
 	uint n = get_global_id(0);
 
 	if (nOverlaps[n] >= nThresh)
-		nActives[n] = 1;
+		nStates[n] = 1;
 }
 
 kernel void decodeNeurons(
-	global uchar* outputs,
-	global uchar* nActives,
-	global ushort* sAddrs,
-	global ushort* sPerms,
-	uint numSpD)
+	global uchar* sStates,
+	global uchar* nStates,
+	global uint* sAddrs,
+	global uchar* sPerms,
+	const uint numSpD)
 {
 	uint n = get_global_id(0);
 
-	if (nActives[n] > 0)
+	if (nStates[n] > 0)
 	{
 		uint s0 = n * numSpD;
+
 		for (uint s = s0; s < s0 + numSpD; s++)
 		{
-//			if (sPerms[s] > 0)
-				outputs[sAddrs[s]] = 1;
+			if (sPerms[s] > 0)
+				sStates[sAddrs[s]] = 1;
 		}
 	}
 }
