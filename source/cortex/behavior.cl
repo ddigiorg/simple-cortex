@@ -1,6 +1,6 @@
-// ==========
-// behavio.cl
-// ==========
+// ===========
+// behavior.cl
+// ===========
 
 kernel void overlapSynapses(
 	global uchar* nOverlaps,
@@ -25,7 +25,7 @@ kernel void overlapSynapses(
 }
 
 kernel void activateNeurons(
-	global ushort* nBoosts,
+	global uint* nBoosts,
 	global uchar* nStates,
 	global uchar* nOverlaps,
 	global uchar* inhibit,
@@ -45,6 +45,7 @@ kernel void activateNeurons(
 	}
 }
 
+// Need to develop more optimized learning algorithm
 kernel void learnSynapses(
 	global uchar* sStates,
 	const uint numStimulus,
@@ -61,6 +62,8 @@ kernel void learnSynapses(
 		uint j = 0;
 
 		uint s0 = n * numSpD;
+
+		// Synaptic Learning - Grow or Shrink
 		for (uint s = s0; s < s0 + numSpD; s++)
 		{
 			if (sPerms[s] > 0)
@@ -75,6 +78,7 @@ kernel void learnSynapses(
 			}
 		}
 
+		// Synaptic Learning - Move
 		for (uint s = s0; s < s0 + numSpD; s++)
 		{
 			if (sPerms[s] == 0)

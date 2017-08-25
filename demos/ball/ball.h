@@ -12,12 +12,18 @@
 class Ball
 {
 public:
-	Ball(unsigned int sizeSceneX, unsigned int sizeSceneY, unsigned int radius)
+	Ball(
+		unsigned int sizeSceneX, 
+		unsigned int sizeSceneY, 
+		unsigned int ballRadius,
+		unsigned int posType,
+		unsigned int velType)
 	{
 		_sizeSceneX = sizeSceneX;
 		_sizeSceneY = sizeSceneY;
-
-		_radius = radius;
+		_radius = ballRadius;
+		_posType = posType;
+		_velType = velType;
 
 		_binaryVec.resize(_sizeSceneX * _sizeSceneY);
 
@@ -47,24 +53,44 @@ public:
 private:
 	void reset()
 	{
-//		float percent = 0.50;
+		switch (_posType)
+		{
+			// Ball Position - Middle of Screen
+			case 0:
+				_positionX = (float)(_sizeSceneX / 2);
+				_positionY = (float)(_sizeSceneY / 2);
+				break;
 
-//		unsigned int limitX = _sizeSceneX * percent;
-//		unsigned int limitY = _sizeSceneY * percent;
+			// Ball Position - Random Ints
+			case 1:
+				unsigned int limitX = _sizeSceneX * 0.25;
+				unsigned int limitY = _sizeSceneX * 0.25;
 
-//		_positionX = (float)(utils::getRandomInt(0 + _radius + limitX, _sizeSceneX - 1 - _radius - limitX));
-//		_positionY = (float)(utils::getRandomInt(0 + _radius + limitY, _sizeSceneY - 1 - _radius - limitY));
+				_positionX = (float)(utils::getRandomInt(0 + _radius + limitX, _sizeSceneX - 1 - _radius - limitX));
+				_positionY = (float)(utils::getRandomInt(0 + _radius + limitY, _sizeSceneY - 1 - _radius - limitY));
+				break;
+		}
 
-		_positionX = (float)(_sizeSceneX / 2);
-		_positionY = (float)(_sizeSceneY / 2);
+		switch (_velType)
+		{
+			// Ball Velocity - Zero
+			case 0:
+				_velocityX = 0;
+				_velocityY = 0;
+				break;
 
-//		_positionX = (float)(utils::getRandomInt(0 + _radius, _sizeSceneX - 1 - _radius));
-//		_positionY = (float)(utils::getRandomInt(0 + _radius, _sizeSceneY - 1 - _radius));
+			// Ball Velocity - Random Ints
+			case 1:
+				_velocityX = (float)(utils::getRandomInt(-1, 1) * 5);
+				_velocityY = (float)(utils::getRandomInt(-1, 1) * 5);
+				break;
 
-		_velocityX = utils::getRandomFloat(-5.0f, 5.0f);
-
-//		_velocityX = (float)(utils::getRandomInt(-1, 1) * 5);
-		_velocityY = 0.0f;
+			// Ball Velocity - Random Floats
+			case 2:
+				_velocityX = utils::getRandomFloat(-5.0f, 5.0f);
+				_velocityY = utils::getRandomFloat(-5.0f, 5.0f);
+				break;
+		}
 
 		_acceleration = 1.0f;
 
@@ -144,6 +170,8 @@ private:
 
 	unsigned int _sizeSceneX;
 	unsigned int _sizeSceneY;
+	unsigned int _posType;
+	unsigned int _velType;
 
 	int _radius;
 

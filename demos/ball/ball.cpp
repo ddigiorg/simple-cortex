@@ -14,49 +14,53 @@
 
 int main()
 {
-	// Setup SFML render window and ball simulation
+	// Setup SFML Render Window
 	unsigned int sizeSceneX = 100; // pixels
 	unsigned int sizeSceneY = 100; // pixels
 	unsigned int scaleScene = 4;
-	unsigned int ballRadius = 4;
 	unsigned int sizeDisplayX = sizeSceneX * scaleScene; // pixels
 	unsigned int sizeDisplayY = sizeSceneY * scaleScene; // pixels
 	unsigned int numPixels = sizeSceneX * sizeSceneY;
 
 	sf::RenderWindow window;
-	window.create(sf::VideoMode(sizeDisplayX, sizeDisplayY), "Simple Cortex - Ball Demo 2.0", sf::Style::Default);
+	window.create(sf::VideoMode(sizeDisplayX, sizeDisplayY), "Simple Cortex - Ball Demo", sf::Style::Default);
 
-	Ball ball(sizeSceneX, sizeSceneY, ballRadius);
+	// Setup Scene Renderer
+	std::vector<float> rVec(numPixels);
+	std::vector<float> gVec(numPixels);
+	std::vector<float> bVec(numPixels);
 
 	Render2D scene(sizeSceneX, sizeSceneY);
 	scene.setPosition(sizeDisplayX / 2, sizeDisplayY / 2);
 	scene.setScale((float) scaleScene);
 
-	std::vector<float> rVec(numPixels);
-	std::vector<float> gVec(numPixels);
-	std::vector<float> bVec(numPixels);
+	// Setup Ball Simulation
+	unsigned int ballRadius = 4;
+	unsigned int posType = 0;
+		// 0 - ball position resets to middle of screen
+		// 1 - ball position resets to random int
+	unsigned int velType = 2;
+		// 0 - ball velocity resets to zero
+		// 1 - ball velocity resets to random int
+		// 2 - ball velocity resets to random float
+
+	Ball ball(sizeSceneX, sizeSceneY, ballRadius, posType, velType);
 
 	// Setup OpenCL
 	ComputeSystem cs;
 	ComputeProgram cp;
 
-	std::string kernels_cl = "source/cortex/behavior.cl";
-
 	cs.init(ComputeSystem::_gpu);
 	cs.printCLInfo();
+
+	std::string kernels_cl = "source/cortex/behavior.cl";
+
 	cp.loadFromSourceFile(cs, kernels_cl);
 
 	// Setup Simple Cortex Area
 	unsigned int numStimulae = 4;
 	unsigned int numForests = 2;
-	unsigned int numNeurons = 1500000; 
-
-	// NEED TO FIGURE THIS OUT!!!
-	// Getting segfaults at random beyond 1,600,000 neurons...
-	// Using unsigned int for neuron addressing
-	// 1.5 mil neurons x 32 bits = 6 MB per uint buffer
-	// well under GTX 1070 max buffer size...
-	// Otherwise smooth operating
+	unsigned int numNeurons = 500000; 
 
 	std::vector<Stimulae> vecStimulae(numStimulae);
 	vecStimulae[0].init(cs, numPixels);  // input - current binary scene state
@@ -65,7 +69,7 @@ int main()
 	vecStimulae[3].init(cs, numPixels);  // output - predicted future binary scene state
 
 	std::vector<Forest> vecForest(numForests);
-	vecForest[0].init(cs, cp, numNeurons, 50, 0.75f);
+	vecForest[0].init(cs, cp, numNeurons, 50, 0.25f);
 	vecForest[1].init(cs, cp, numNeurons,  1, 1.00f);
 
 	Area area;
@@ -74,7 +78,7 @@ int main()
 	std::vector<unsigned char> vecResetNeurons(numNeurons);
 	vecResetNeurons[numNeurons - 1] = 1;
 
-	// Render loop
+	// Render Loop
 	bool forecast = false;
 	bool stepMode = true;
 	bool step = true;
@@ -136,6 +140,10 @@ int main()
 				vecStimulae[1].setStates(cs, vecResetNeurons);
 
 			area.encode(cs, {vecStimulae[0], vecStimulae[1]}, {vecForest[0], vecForest[1]});
+				// Getting segfaults beyond 1,500,000 neurons (Note: using cl_uint for neuron addressing)
+				// Forest 0: 1.5 mil neurons x 1 dendrite/neuron x 50 synapse/dendrite x 32 bits/synapse = 300 MB per uint address buffer <-- could be this?
+				// Forest 1: 1.5 mil neurons x 1 dendrite/neuron x  1 synapse/dendrite x 32 bits/synapse =   6 MB per uint address buffer
+
 			area.learn(cs, {vecStimulae[0], vecStimulae[1]}, {vecForest[0], vecForest[1]});
 
 			vecStimulae[1].setStates(cs, area.getStates(cs));
