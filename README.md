@@ -5,7 +5,7 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 - **General**: Algorithms can process any form of stimulation (spatio-temporal sensory-motor)
 - **Dynamic**: Stored knowledge/memories adapt based on new knowledge and observations
 - **Predictive**: Algorithms are able to predict multiple future states based on learned experience
-- **Fast**: Algorithms are parallelized in OpenCL for GPU processing (10 billion synapses/sec)
+- **Fast**: Algorithms are parallelized in OpenCL for GPU processing (10 billion synapses/sec on GTX 1070 GPU)
 
 ## Demos
 [YouTube - Ball Demo](https://www.youtube.com/watch?v=iRt8sVPZkss)
