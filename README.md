@@ -1,10 +1,9 @@
 # Simple Cortex (SC)
-- **Simple**: Algorithms do not require sophisticated understanding of mathematics
-- **Neocortical**: Architecture inspired by intelligence principles of the mammalian neocortex
-- **Unsupervised**: Algorithms acquire knowledge by observation (no labeled data necessary)
-- **On-line**: Algorithms observe and learn data continuously
+
+Simple Cortex (SC) is an unsupervised on-line learning machine intelligence architecture based on intelligence principles of the mammalian neocortex and a simple theory of neurons.  SC is:
+
 - **General**: Algorithms can process any form of stimulation (spatio-temporal sensory-motor)
-- **Dynamic Memory**: Stored knowledge adapts based on new knowledge
+- **Dynamic**: Stored knowledge/memories adapt based on new knowledge and observations
 - **Predictive**: Algorithms are able to predict multiple future states based on learned experience
 - **Fast**: Algorithms are parallelized in OpenCL for GPU processing (10 billion synapses/sec)
 
@@ -14,8 +13,8 @@
 
 ## Theory
 - Neurons are sensors with memory that respond concurrent stimulae
-- Concurrent stimulae are multiple detectable changes in an environment within a time range
-- Concurrent stimulae may represent patterns or sequences
+- Concurrent stimulae are detectable changes in an environment within a time range
+- Concurrent neuron activations (a form of stimulae) represent spatio-temporal sensory-motor patterns or sequences
 
 ## Architecture
 
