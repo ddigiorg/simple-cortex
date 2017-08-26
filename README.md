@@ -18,7 +18,6 @@
 - Concurrent stimulae may represent patterns or sequences
 
 ## Architecture
-![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/sc.png)
 
 - **Stimulae**: Detectable changes in an environment represented by a binary data vector
 - **Synapse**: Fundamental memory storage structure
