@@ -8,8 +8,9 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 - **Fast**: Algorithms are parallelized in OpenCL for GPU processing (10 billion synapses/sec)
 
 ## Demos
-- [Ball 1.0](https://www.youtube.com/watch?v=Az5HldJHbKc)
-- [Ball 2.0](https://www.youtube.com/watch?v=iRt8sVPZkss)
+[YouTube - Ball Demo](https://www.youtube.com/watch?v=iRt8sVPZkss)
+
+![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/ball-demo.gif)
 
 ## Theory
 - Neurons are sensors with memory that respond concurrent stimulae
