@@ -19,6 +19,8 @@
 
 ## Architecture
 
+![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/sc.png)
+
 - **Stimulae**: Detectable changes in an environment represented by a binary data vector
 - **Synapse**: Fundamental memory storage structure
 - **Dendrite**: A collection of Synapses forming a coincidence detector
