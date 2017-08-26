@@ -1,5 +1,4 @@
 # Simple Cortex (SC)
-Simple Cortex is:
 - **Simple**: Algorithms do not require sophisticated understanding of mathematics
 - **Neocortical**: Architecture inspired by intelligence principles of the mammalian neocortex
 - **Unsupervised**: Algorithms acquire knowledge by observation (no labeled data necessary)
@@ -8,11 +7,6 @@ Simple Cortex is:
 - **Dynamic Memory**: Stored knowledge adapts based on new knowledge
 - **Predictive**: Algorithms are able to predict multiple future states based on learned experience
 - **Fast**: Algorithms are parallelized in OpenCL for GPU processing (10 billion synapses/sec)
-
-Simple Cortex is inspired by:
-- **Numenta**: Hierarchical Temporal Memory(HTM)
-- **Ogma**: Feynman Machine
-- **Rebel Science**: Rebel Speech
 
 ## Demos
 - [Ball 1.0](https://www.youtube.com/watch?v=Az5HldJHbKc)
@@ -52,3 +46,8 @@ Simple Cortex is inspired by:
 ## Future Improvements
 - Upgrade algorithms to allow for observing and learning from scalar data vectors
 - Optimize learnSynapses kernel
+
+## Inspiration:
+- **Numenta**: Hierarchical Temporal Memory(HTM)
+- **Ogma**: Feynman Machine
+- **Rebel Science**: Rebel Speech
