@@ -60,7 +60,7 @@ int main()
 	// Setup Simple Cortex Area
 	unsigned int numStimulae = 4;
 	unsigned int numForests = 2;
-	unsigned int numNeurons = 500000; 
+	unsigned int numNeurons = 500000; // 1,500,000 reccomended maxumum
 
 	std::vector<Stimulae> vecStimulae(numStimulae);
 	vecStimulae[0].init(cs, numPixels);  // input - current binary scene state
@@ -90,6 +90,9 @@ int main()
 	printf("\nPress 'Space' to step algorithms");
 	printf("\nPress 'Esc' to quit application");
 	printf("\n");
+
+	sf::Clock clock;
+	sf::Time time;
 
 	while (!quit)
 	{
@@ -139,12 +142,17 @@ int main()
 			if (ball.getStartSequence())
 				vecStimulae[1].setStates(cs, vecResetNeurons);
 
+			//clock.restart();
+
 			area.encode(cs, {vecStimulae[0], vecStimulae[1]}, {vecForest[0], vecForest[1]});
 				// Getting segfaults beyond 1,500,000 neurons (Note: using cl_uint for neuron addressing)
 				// Forest 0: 1.5 mil neurons x 1 dendrite/neuron x 50 synapse/dendrite x 32 bits/synapse = 300 MB per uint address buffer <-- could be this?
 				// Forest 1: 1.5 mil neurons x 1 dendrite/neuron x  1 synapse/dendrite x 32 bits/synapse =   6 MB per uint address buffer
 
 			area.learn(cs, {vecStimulae[0], vecStimulae[1]}, {vecForest[0], vecForest[1]});
+
+			//time = clock.getElapsedTime();
+			//printf("\n%f s", time.asSeconds());
 
 			vecStimulae[1].setStates(cs, area.getStates(cs));
 

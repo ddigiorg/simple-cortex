@@ -24,15 +24,15 @@ public:
 	const cl_uchar _S_PERM_MAX = static_cast<cl_char>(99);
 
 	cl_uint numDpF;  // number of dendrites per forest
-    cl_uint numSpD;  // number of synapses per dendrite
-    cl_uint numSpF;  // number of synapses per forest
-    cl_uint dThresh; // dendrite activation threshold (how many active synapses needed to activate dendrite)
+	cl_uint numSpD;  // number of synapses per dendrite
+	cl_uint numSpF;  // number of synapses per forest
+	cl_uint dThresh; // dendrite activation threshold (how many active synapses needed to activate dendrite)
 
-    size_t numbytesSAddrs;
-    size_t numbytesSPerms;
+	size_t numbytesSAddrs;
+	size_t numbytesSPerms;
 
-    cl::Buffer bufferSAddrs;  // uints (values from 0 to 4,294,967,295)
-    cl::Buffer bufferSPerms;  // uchars (values from 0 to 99)
+	cl::Buffer bufferSAddrs;  // uints (values from 0 to 4,294,967,295)
+	cl::Buffer bufferSPerms;  // uchars (values from 0 to 99)
 };
 
 #endif
