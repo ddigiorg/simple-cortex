@@ -19,7 +19,7 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 
 ## Architecture
 
-![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/sc.png)
+
 
 - **Stimulae**: Detectable changes in an environment represented by a binary data vector
 - **Synapse**: Fundamental memory storage structure
