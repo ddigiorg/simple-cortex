@@ -48,7 +48,7 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 - Upgrade compute-system and compute-program to use cl2.hpp
 - Benchmark performance vs. NUPIC and Ogmaneo
 - Upgrade algorithms to allow for observing and learning from scalar data vectors
-- Upgrade algorithms to allow for neurons sharing similar dendrites
+- Upgrade algorithms to allow neurons to share similar dendrites
 - Optimize learnSynapses kernel
 
 ## Inspiration:
