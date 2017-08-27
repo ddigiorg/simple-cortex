@@ -1,11 +1,11 @@
 # Simple Cortex (SC)
 
-Simple Cortex (SC) is an unsupervised on-line learning machine intelligence architecture based on intelligence principles of the mammalian neocortex and a simple theory of neurons.  SC is:
+Simple Cortex (SC) is an unsupervised on-line learning machine intelligence architecture based on intelligence principles of the mammalian neocortex and a simple theory of neurons.  Simple Cortex is:
 
-- **General**: Algorithms can observe and learn any spatio-temporal sensory-motor input
-- **Dynamic**: Stored knowledge/memories adapt based on new knowledge and observations
-- **Predictive**: Algorithms are able to predict multiple future states based on learned experience
-- **Fast**: Algorithms are parallelized in OpenCL for GPU processing (10 billion synapses/sec on GTX 1070 GPU)
+- **Flexible**: SC algorithms can observe and learn from any spatio-temporal sensory-motor input.
+- **Dynamic**: Stored knowledge/memories adapt based on new knowledge and observations.  If a SC area becomes full it will keep learning but only remember the most observed data.
+- **Predictive**: SC is able to predict neuron states many time steps into the future.  It can also translate these neuron states back to observable data.
+- **Fast**: SC algorithms are parallelized in OpenCL for GPU processing (10 billion synapses/sec on GTX 1070 GPU) and allow for up to 1.5 million neurons.
 
 ## Demos
 [YouTube - Ball Demo](https://www.youtube.com/watch?v=iRt8sVPZkss)
