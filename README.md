@@ -2,7 +2,7 @@
 
 Simple Cortex (SC) is an unsupervised on-line learning machine intelligence architecture based on intelligence principles of the mammalian neocortex and a simple theory of neurons.  SC is:
 
-- **General**: Algorithms can process any form of stimulation (spatio-temporal sensory-motor)
+- **General**: Algorithms can observe and learn any spatio-temporal sensory-motor input
 - **Dynamic**: Stored knowledge/memories adapt based on new knowledge and observations
 - **Predictive**: Algorithms are able to predict multiple future states based on learned experience
 - **Fast**: Algorithms are parallelized in OpenCL for GPU processing (10 billion synapses/sec on GTX 1070 GPU)
@@ -13,36 +13,36 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 ![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/ball-demo.gif)
 
 ## Theory
-- Neurons are sensors with memory that respond concurrent stimulae
-- Concurrent stimulae are detectable changes in an environment within a time range
-- Concurrent neuron activations (a form of stimulae) represent spatio-temporal sensory-motor patterns or sequences
+- Neurons are sensors respond to concurrent stimulae and have memory.
+- Concurrent stimulae are detectable changes in an environment within a time range.
+- Concurrent neuron activations (a form of stimulae) represent spatio-temporal sensory-motor patterns or sequences.
 
 ## Architecture
 
 ![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/sc.png)
 
-- **Stimulae**: Detectable changes in an environment represented by a binary data vector
-- **Synapse**: Fundamental memory storage structure
-- **Dendrite**: A collection of Synapses forming a coincidence detector
-- **Forest**: A collection of Dendrites used to organize OpenCL buffers
-- **Neuron**: A collection of Dendrites forming a sensor that responds to stimulae
-- **Area**: A collection of Neurons with activation and inhibition rules
+- **Stimulae**: Detectable changes in an environment represented by a binary data vector.  Example stimulae include light brightness, color, sound frequency, muscle contraction, and neuron activations
+- **Synapse**: Connects towards, responds to and stores knowledge from observed stimulae
+- **Dendrite**: A collection of synapses forming a coincidence detector
+- **Forest**: A collection of dendrites used to organize OpenCL data buffers that respond to a particular stimulae
+- **Neuron**: A collection of dendrites forming a sensor that responds to dendrite activation
+- **Area**: A collection of neurons with activation and inhibition rules
 
 ## Algorithms
-- **Encode**: Activates Neurons based on Stimulae
-  - Overlap Synapses with Stimulae
-  - Activate Neurons (and Inhibit if applicable)
-  - If no Inhibition, select highest Boost Neurons
+- **Encode**: Converts observed stimulae to neuron activations
+  - Overlap stimulae with synapses
+  - Activate neurons and inhibit if applicable
+  - If no inhibition, select neuron with highest boost value
 
-- **Learn**: Synapses store knowledge of Stimulae
-  - For all Active Neurons: Grow, Shrink, or Move Synapses to Active Stimulae
+- **Learn**: Store knowledge of observed stimulae
+  - For all active neurons: grow, shrink, or move synapses to currently active stimulae
 
-- **Predict**: Predict Neurons based on Stimulae
-  - Overlap Synapses with Stimulae
-  - Predict Neurons
+- **Predict**: Predict neurons based on Stimulae
+  - Overlap stimulae with synapses
+  - Predict neurons
   
-- **Decode**: Retrieve Stimulae based on Neuron Activations
-  - Retrieve Synapse addresses of Active Neurons
+- **Decode**: Converts neuron activations to stimulae using synapse memories
+  - Retrieve synapse addresses of active neurons
 
 ## Future Improvements
 - Upgrade compute-system and compute-program to use cl2.hpp
@@ -51,6 +51,6 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 - Optimize learnSynapses kernel
 
 ## Inspiration:
-- **Numenta**: Hierarchical Temporal Memory(HTM)
+- **Numenta**: Hierarchical Temporal Memory (HTM)
 - **Ogma**: Feynman Machine
-- **Rebel Science**: Rebel Speech
+- **Rebel Science**: Rebel Cortex
