@@ -51,7 +51,7 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 - Upgrade algorithms to allow neurons to share similar dendrites
 - Optimize learnSynapses kernel
 
-## Inspiration:
+## Inspiration
 - **Numenta**: Hierarchical Temporal Memory (HTM)
 - **Ogma**: Feynman Machine
 - **Rebel Science**: Rebel Cortex
