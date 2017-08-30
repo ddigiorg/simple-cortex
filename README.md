@@ -46,6 +46,7 @@ Simple Cortex (SC) is a Machine Intelligence architecture based on intelligence 
 
 ## Future Improvements
 - Benchmark performance vs. NUPIC, Ogmaneo, and LSTM
+- Figure out why "encode" function segfaults over 1.5 million neurons
 - Upgrade algorithms to allow for observing and learning from scalar stimulae data vectors, which could represent the number of action potentials outputted by a presynaptic-neurons within a time step
 - Upgrade algorithms to allow neurons to share similar dendrites.  Resource sharing could allow for a smaller memory footprint
 - Optimize "learnSynapses" kernel
