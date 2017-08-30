@@ -21,8 +21,8 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 
 ![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/sc.png)
 
-- **Stimulae**: Detectable changes in an environment represented by a binary data vector.  Example stimulae include light brightness, color, sound frequency, muscle contraction, and neuron activations
-- **Synapse**: Connects towards, responds to and stores knowledge from observed stimulae
+- **Stimulae**: Detectable changes in an environment represented by a binary data vector.  Examples include light brightness, color, sound frequency, muscle contraction, and neuron activations.
+- **Synapse**: Connects towards, responds to, and stores knowledge from observed stimulae
 - **Dendrite**: A collection of synapses forming a coincidence detector
 - **Forest**: A collection of dendrites used to organize OpenCL data buffers that respond to a particular stimulae
 - **Neuron**: A collection of dendrites forming a sensor that responds to dendrite activation
