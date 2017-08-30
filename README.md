@@ -14,9 +14,8 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 ![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/ball-demo.gif)
 
 ## Theory
-- Concurrent stimulae are detectable changes in an environment within a time range.
-- Neurons are sensors respond to concurrent stimulae and have memory.
-- Concurrent neuron activations are the language of the neocortex and may represent spatio-temporal sensory-motor patterns or sequences.
+- Concurrent stimulae are detectable changes in an environment that occour within a time range.  To get an intuition for concurrent stimulae, think about the computer screen.  All pixels must activate in a very narrow window in time (concurrently) to display recognizeable objects.
+- Neurons are sensors that respond to concurrent stimulae and have memory in the form of synapses that grow and connect with commonly reoccouring stimulae.  Neuron activations are the language of the neocortex and represent spatio-temporal sensory-motor patterns and/or sequences of stimulae.
 
 ## Architecture
 
