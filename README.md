@@ -49,6 +49,7 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 - Upgrade algorithms to allow for observing and learning from scalar data vectors
 - Upgrade algorithms to allow neurons to share similar dendrites
 - Optimize learnSynapses kernel
+- Create reinforcement learning demo by adding a simple neurotransmitter model
 
 ## Inspiration
 - **Numenta**: Hierarchical Temporal Memory (HTM)
