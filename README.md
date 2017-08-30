@@ -31,19 +31,19 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 
 ## Algorithms
 - **Encode**: Converts observed stimulae to neuron activations
-  1. Overlap stimulae with synapses
-  2. Activate and inhibit neurons if overlaps beat neuron activation thresholds
-  3. If no inhibition, activate neurons with highest boost value
+  - Overlap stimulae with synapses
+  - Activate and inhibit neurons if overlaps beat neuron activation thresholds
+  - If no inhibition, activate neurons with highest boost value
 
 - **Learn**: Store knowledge of observed stimulae
-  1. For all active neurons: grow, shrink, or move synapses to active stimulae
+  - For all active neurons: grow, shrink, or move synapses to active stimulae
 
 - **Predict**: Predict neurons based on stimulae
-  1. Overlap stimulae with synapses
-  2. Activate neurons if overlaps beat neuron prediction threshold
+  - Overlap stimulae with synapses
+  - Activate neurons if overlaps beat neuron prediction threshold
   
 - **Decode**: Converts neuron activations to stimulae using synapse memories
-  1. Activate stimulae based on the synapse addresses of active neurons
+  - Activate stimulae based on the synapse addresses of active neurons
 
 ## Future Improvements
 - Benchmark performance vs. NUPIC, Ogmaneo, and LSTM
