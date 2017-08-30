@@ -52,6 +52,16 @@ Simple Cortex (SC) is an unsupervised on-line learning machine intelligence arch
 - Create reinforcement learning demo by adding a simple neurotransmitter model
 
 ## Inspiration
-- **Numenta**: Hierarchical Temporal Memory (HTM)
-- **Ogma**: Feynman Machine
-- **Rebel Science**: Rebel Cortex
+- **Numenta**
+  - [Hierarchical Temporal Memory (HTM)](https://numenta.com/papers/)
+  - [Biological and Machine Intelligence (BAMI)](https://numenta.com/biological-and-machine-intelligence/)
+  - [NuPIC](https://github.com/numenta/nupic)
+  - [HTM Forum](https://discourse.numenta.org/)
+    
+- **Ogma**
+  - [Feynman Machine](https://arxiv.org/abs/1609.03971)
+  - [OgmaNeo](https://github.com/ogmacorp/OgmaNeo)
+  
+- **Rebel Science**
+  - [Rebel Cortex](http://www.rebelscience.org/download/rebelcortex.pdf)
+  - [Rebel Speech](http://www.rebelscience.org/download/rebelspeech.pdf)
