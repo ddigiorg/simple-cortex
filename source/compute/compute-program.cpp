@@ -7,32 +7,36 @@
 #include <fstream>
 #include <iostream>
 
-bool ComputeProgram::loadFromSourceFile(ComputeSystem& cs, const std::string& fileName)
+bool ComputeProgram::loadFromFile(ComputeSystem &cs, const std::string &fileName)
 {
 	std::ifstream sourceFile(fileName);
 
 	if (!sourceFile.is_open())
 	{
-		std::cout << "[cp] Could not open file: " << fileName << std::endl;
+		std::cerr << "[compute] Could not open file " << fileName << "!" << std::endl;
 		return false;
 	}
 
-	std::string sourceCode(
-		std::istreambuf_iterator<char>(sourceFile),
-		(std::istreambuf_iterator<char>()));
+	std::string kernel = "";
 
-	cl::Program::Sources source(1, std::make_pair(sourceCode.c_str(), sourceCode.length() + 1));
+	while (!sourceFile.eof() && sourceFile.good())
+	{
+		std::string line;
 
-	_program = cl::Program(cs.getContext(), source);
+		std::getline(sourceFile, line);
+
+		kernel += line + "\n";
+	}
+
+	_program = cl::Program(cs.getContext(), kernel);
+
+	if (_program.build(std::vector<cl::Device>(1, cs.getDevice())) != CL_SUCCESS)
+	{
+		std::cerr << "[compute] Error building: " << _program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cs.getDevice()) << std::endl;
+		return false;
+	}
 
 	sourceFile.close();
 
-	try
-	{
-		_program.build(); //devices
-	}
-	catch (cl::Error er)
-	{
-		std::cerr << "ERROR: " <<  er.what() << ": " << er.err() << std::endl;
-	}
+	return true;
 }

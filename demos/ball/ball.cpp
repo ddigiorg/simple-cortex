@@ -55,7 +55,7 @@ int main()
 
 	std::string kernels_cl = "source/cortex/behavior.cl";
 
-	cp.loadFromSourceFile(cs, kernels_cl);
+	cp.loadFromFile(cs, kernels_cl);
 
 	// Setup Simple Cortex Area
 	unsigned int numStimulae = 4;
@@ -84,7 +84,7 @@ int main()
 	bool step = true;
 	bool quit = false;
 
-	printf("\nLearning %i Neurons each with %i Dendrites", numNeurons, numForests);
+	printf("\nLearning %i Neurons with %i Dendrites each", numNeurons, numForests);
 	printf("\nPress 'f' to enable/disable forecasting");
 	printf("\nPress 'p' to enable/disable step mode");
 	printf("\nPress 'Space' to step algorithms");
