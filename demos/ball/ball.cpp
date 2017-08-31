@@ -60,7 +60,7 @@ int main()
 	// Setup Simple Cortex Area
 	unsigned int numStimulae = 4;
 	unsigned int numForests = 2;
-	unsigned int numNeurons = 500000; // 1,500,000 reccomended maxumum
+	unsigned int numNeurons = 1500000; // 1,500,000 reccomended maxumum
 
 	std::vector<Stimulae> vecStimulae(numStimulae);
 	vecStimulae[0].init(cs, numPixels);  // input - current binary scene state
@@ -80,19 +80,35 @@ int main()
 
 	// Render Loop
 	bool forecast = false;
+	bool learn = true;
 	bool stepMode = true;
-	bool step = true;
+	bool step = false;
 	bool quit = false;
 
 	printf("\nLearning %i Neurons with %i Dendrites each", numNeurons, numForests);
-	printf("\nPress 'f' to enable/disable forecasting");
-	printf("\nPress 'p' to enable/disable step mode");
+	printf("\nPress 'f' to enable/disable forecasting (default disabled)");
+	printf("\nPress 'l' to enable/disable learning    (default enabled )");
+	printf("\nPress 'p' to enable/disable step mode   (default enabled )");
 	printf("\nPress 'Space' to step algorithms");
 	printf("\nPress 'Esc' to quit application");
 	printf("\n");
 
+	/*
 	sf::Clock clock;
 	sf::Time time;
+
+	float msum = 0.0f;
+	float mean = 0.0f;
+	float vsum = 0.0f;
+	float diff = 0.0f;
+	float vari = 0.0f;
+
+	unsigned int numTimes = 100000;
+	unsigned int count = 0;
+
+	std::vector<float> times;
+	times.resize(numTimes);
+	*/
 
 	while (!quit)
 	{
@@ -115,12 +131,16 @@ int main()
 						step = true;
 						break;
 
-					case sf::Keyboard::P:
-						stepMode = !stepMode;
-						break;
-
 					case sf::Keyboard::F:
 						forecast = !forecast;
+						break;
+
+					case sf::Keyboard::L:
+						learn = !learn;
+						break;
+
+					case sf::Keyboard::P:
+						stepMode = !stepMode;
 						break;
 				}
 			}
@@ -142,17 +162,15 @@ int main()
 			if (ball.getStartSequence())
 				vecStimulae[1].setStates(cs, vecResetNeurons);
 
-			//clock.restart();
+//			clock.restart();
 
 			area.encode(cs, {vecStimulae[0], vecStimulae[1]}, {vecForest[0], vecForest[1]});
 				// Getting segfaults beyond 1,500,000 neurons (Note: using cl_uint for neuron addressing)
 				// Forest 0: 1.5 mil neurons x 1 dendrite/neuron x 50 synapse/dendrite x 32 bits/synapse = 300 MB per uint address buffer <-- could be this?
 				// Forest 1: 1.5 mil neurons x 1 dendrite/neuron x  1 synapse/dendrite x 32 bits/synapse =   6 MB per uint address buffer
 
-			area.learn(cs, {vecStimulae[0], vecStimulae[1]}, {vecForest[0], vecForest[1]});
-
-			//time = clock.getElapsedTime();
-			//printf("\n%f s", time.asSeconds());
+			if (learn)
+				area.learn(cs, {vecStimulae[0], vecStimulae[1]}, {vecForest[0], vecForest[1]});
 
 			vecStimulae[1].setStates(cs, area.getStates(cs));
 
@@ -178,6 +196,37 @@ int main()
 
 			std::vector<unsigned char> input = vecStimulae[0].getStates(cs);
 
+			/*
+			time = clock.getElapsedTime();
+
+			if (count < numTimes)
+			{
+				times[count] = time.asSeconds();
+				count++;
+			}
+			else if (count == numTimes) 
+			{
+				for (int i = 0; i < numTimes; i++)
+					msum += times[i];
+
+				mean = msum / numTimes;
+
+				for (int i = 0; i < numTimes; i++)
+				{
+					diff = times[i] - mean;
+					vsum += diff * diff;
+				}
+
+				vari = vsum / numTimes;
+
+				printf("\nmean: %f", mean);
+				printf("\nvari: %f", vari);
+				printf("\n");
+
+				count++;
+			}
+			*/
+
 			for (unsigned int p = 0; p < numPixels; p++)
 			{
 				if (input[p] > 0)
@@ -188,10 +237,9 @@ int main()
 
 			window.clear(sf::Color::Black);
 			window.draw(scene.getSprite());
+			window.display();
 
 			step = false;
 		}
-
-		window.display();
 	}
 }
