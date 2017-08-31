@@ -6,7 +6,7 @@ Simple Cortex (SC) is a Machine Intelligence architecture based on intelligence 
 - **Flexible**: SC can observe and learn from any spatio-temporal sensory-motor input.
 - **Dynamic**: Stored knowledge/memories adapt based on new knowledge and observations.  If a SC area becomes full it will keep learning but only remember the most observed data.
 - **Predictive**: SC is able to predict neuron states many time steps into the future.  It can also translate these neuron states back to observable data.
-- **Fast**: SC is coded using OpenCL for fast GPU parallel processing.  Calculation speeds of 10 billion synapses/sec with a capacity of up to 1.5 million neurons on a GTX 1070 GPU.
+- **Fast**: SC is coded using OpenCL for fast GPU parallel processing
 
 ## Demos
 [YouTube - Ball Demo](https://www.youtube.com/watch?v=iRt8sVPZkss)
@@ -22,20 +22,34 @@ Simple Cortex (SC) is a Machine Intelligence architecture based on intelligence 
 ![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/sc.png)
 
 - **Stimulae**: Detectable changes in an environment represented by a binary data vector.  Examples include light brightness, color, sound frequency, muscle contraction, and neuron activations.
+  - sState: Stimulus state represents whether a stimulus is active or inactive
 - **Synapse**: Connects towards, responds to, and stores knowledge from observed stimulae
+  - sAddrs: Synapse address represents what stimulus a synapse is connected to
+  - sPerms: Synapse permanence represents how strongly a synapse is connected to it's stimulus
 - **Dendrite**: A collection of synapses forming a coincidence detector
+  - dOverlap: Dendrite overlap represents how many synapses are active (connected to active stimulae) during a time step
+  - dThresh: Dendrite threshold represents how many active synapses are needed to activate the dendrite
 - **Forest**: A collection of dendrites used to organize OpenCL data buffers that respond to a particular stimulae
 - **Neuron**: A collection of dendrites forming a sensor that responds to dendrite activation
+  - nOverlap: Neuron overlap represents how many dendrites are active during a time step
+  - nThresh: Neuron threshold represents how many active dendrites are needed to activate the neuron
+  - nBoost: Neuron boost represents how often a neuron is activated.  Neurons activated less frequently are more likely to learn new patterns
+  - nState: Neuron state represents whether a neuron is active or inactive
 - **Area**: A collection of neurons with activation and inhibition rules
 
+Note: SC may have as many synapses per dendrite, dendrites per neuron, and neurons per area as required.  The number of forests should be equal to the number of dendrites per neuron, although the exact arrangement is up to the user.
+
 ## Algorithms
-- **Encode**: Converts observed stimulae to neuron activations
+- **Encode**: Converts observed stimulae to neuron activations (pattern recognition)
   - Overlap stimulae with synapses
   - Activate and inhibit neurons if overlaps beat neuron activation thresholds
   - If no inhibition, activate neurons with highest boost value
+  - Increment all boost values, then set active neuron boosts to 0
 
-- **Learn**: Store knowledge of observed stimulae
-  - For all active neurons: grow, shrink, or move synapses to active stimulae
+- **Learn**: Active neurons store knowledge of observed stimulae
+  - Grow: Increment synapse permanence if connected stimulae is active
+  - Shrink: Decrement synapse permanence if connected stimulae is inactive
+  - Move: If synapse permanence decreases to 0, change synapse address to an unused active stimulae and set permanence to 1
 
 - **Predict**: Predict neurons based on stimulae
   - Overlap stimulae with synapses
@@ -43,6 +57,31 @@ Simple Cortex (SC) is a Machine Intelligence architecture based on intelligence 
   
 - **Decode**: Converts neuron activations to stimulae using synapse memories
   - Activate stimulae based on the synapse addresses of active neurons
+
+## Benchmarks
+
+#### Compute Speed per Timestep
+
+- Performed Ball demo on Nvidia GTX 1070 GPU
+- Mean and Standard Deviation used 100,000 time step samples
+- 1.5 million neurons with 2 dendrites each
+  - Dendrite 1: 50 synapses
+  - Dendrite 2: 1 synapse
+  - Total synapses: 76.5 million
+- 20 predicts per time step
+
+|            Executed Algorithms             |    Mean (ms)   | Standard Deviation (ms) |
+| ------------------------------------------ |:--------------:|:-----------------------:|
+| **Encode**                                 |       6.72     |           0.00*         |
+| **Encode, Learn**                          |       7.44     |           4.24**        |
+| **Encode, Learn, x20 Predict, x20 Decode** |      21.76     |           4.47**        |
+
+- *Low std. dev. of Encode was less than 1/100th of a millisecond and therefore written as 0.00 ms
+- **High std. dev. of Learn due to unoptimized "move synapse" algorithm
+
+## Results
+
+Simple Cortex can encode and learn **~10 billion synapses/second** according to compute speed benchmark (76.5 million synapses in 7.44 ms).
 
 ## Future Improvements
 - Benchmark performance vs. NUPIC, Ogmaneo, and LSTM
