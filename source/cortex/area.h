@@ -9,7 +9,7 @@
 
 #include "compute/compute-system.h"
 #include "compute/compute-program.h"
-#include "stimulae.h"
+#include "stimuli.h"
 #include "forest.h"
 
 #include <vector>
@@ -19,10 +19,10 @@ class Area
 public:
 	void init(ComputeSystem& cs, ComputeProgram& cp, unsigned int numNpA);
 
-	void encode (ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest);
-	void learn  (ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest);
-	void predict(ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest);
-	void decode (ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest);
+	void encode (ComputeSystem& cs, std::vector<Stimuli> vecStimuli, std::vector<Forest> vecForest);
+	void learn  (ComputeSystem& cs, std::vector<Stimuli> vecStimuli, std::vector<Forest> vecForest);
+	void predict(ComputeSystem& cs, std::vector<Stimuli> vecStimuli, std::vector<Forest> vecForest);
+	void decode (ComputeSystem& cs, std::vector<Stimuli> vecStimuli, std::vector<Forest> vecForest);
 
 	std::vector<unsigned char>  getStates(ComputeSystem& cs);
 
@@ -34,11 +34,11 @@ private:
 	void clearNOverlaps(ComputeSystem& cs);
 	void clearNInhibit(ComputeSystem& cs);
 
-	void overlapSynapses(ComputeSystem& cs, Stimulae stimulae, Forest forest);
+	void overlapSynapses(ComputeSystem& cs, Stimuli stimuli, Forest forest);
 	void activateNeurons(ComputeSystem& cs);
-	void learnSynapses(ComputeSystem& cs, Stimulae stimulae, Forest forest);
+	void learnSynapses(ComputeSystem& cs, Stimuli stimuli, Forest forest);
 	void predictNeurons(ComputeSystem& cs);
-	void decodeNeurons(ComputeSystem& cs, Stimulae stimulae, Forest forest);
+	void decodeNeurons(ComputeSystem& cs, Stimuli stimuli, Forest forest);
 
 private:
 	const cl_uint _ZERO_UINT = static_cast<cl_uint>(0);

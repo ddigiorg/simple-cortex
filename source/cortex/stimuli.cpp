@@ -1,10 +1,10 @@
-// ============
-// stimulae.cpp
-// ============
+// ===========
+// stimuli.cpp
+// ===========
 
-#include "stimulae.h"
+#include "stimuli.h"
 
-void Stimulae::init(ComputeSystem& cs, unsigned int numStimulus)
+void Stimuli::init(ComputeSystem& cs, unsigned int numStimulus)
 {
 	numS = static_cast<cl_uint>(numStimulus);
 
@@ -15,24 +15,24 @@ void Stimulae::init(ComputeSystem& cs, unsigned int numStimulus)
 	cs.getQueue().enqueueFillBuffer(bufferSStates, _ZERO_UCHAR, 0, _numbytesSStates);
 }
 
-void Stimulae::clearStates(ComputeSystem& cs)
+void Stimuli::clearStates(ComputeSystem& cs)
 {
 	cs.getQueue().enqueueFillBuffer(bufferSStates, _ZERO_UCHAR, 0, _numbytesSStates);
 }	
 
-void Stimulae::setStates(ComputeSystem& cs, std::vector<unsigned char> vec)
+void Stimuli::setStates(ComputeSystem& cs, std::vector<unsigned char> vec)
 {
 	cs.getQueue().enqueueWriteBuffer(bufferSStates, CL_TRUE, 0, _numbytesSStates, vec.data());
 } 
 
-std::vector<unsigned char> Stimulae::getStates(ComputeSystem &cs)
+std::vector<unsigned char> Stimuli::getStates(ComputeSystem &cs)
 {
 	std::vector<unsigned char> vecStates(numS);
 	cs.getQueue().enqueueReadBuffer(bufferSStates, CL_TRUE, 0, _numbytesSStates, vecStates.data(), NULL);
 	return vecStates;
 }
 
-void Stimulae::printStates(ComputeSystem& cs)
+void Stimuli::printStates(ComputeSystem& cs)
 {
 	std::vector<unsigned char> vecStates(numS);
 	cs.getQueue().enqueueReadBuffer(bufferSStates, CL_TRUE, 0, _numbytesSStates, vecStates.data(), NULL);

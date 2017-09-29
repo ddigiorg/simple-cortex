@@ -9,8 +9,8 @@ EXECUTE = execute.exe
 
 all: $(EXECUTE)
 
-OBJS_E = ball.o stimulae.o forest.o area.o compute-system.o compute-program.o
-#OBJS_E = occlude.o stimulae.o forest.o area.o compute-system.o compute-program.o input-image.o
+OBJS_E = ball.o stimuli.o forest.o area.o compute-system.o compute-program.o
+#OBJS_E = occlude.o stimuli.o forest.o area.o compute-system.o compute-program.o input-image.o
 
 $(EXECUTE): $(OBJS_E)
 	$(CXX) $(LDLIBS) $(OBJS_E) -o $(EXECUTE)
@@ -31,8 +31,8 @@ ball.o: $(PATH_D)ball/ball.cpp
 # ===========
 PATH_A = ./source/cortex/
 
-stimulae.o: $(PATH_A)stimulae.cpp
-	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_A)stimulae.cpp
+stimuli.o: $(PATH_A)stimuli.cpp
+	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_A)stimuli.cpp
 
 forest.o: $(PATH_A)forest.cpp
 	$(CXX) $(INCLUDE) $(CFLAGS) $(PATH_A)forest.cpp

@@ -31,13 +31,13 @@ void Area::init(ComputeSystem& cs, ComputeProgram& cp, unsigned int numNpA)
 	_kernelDecodeNeurons   = cl::Kernel(cp.getProgram(), "decodeNeurons");
 }
 
-void Area::encode(ComputeSystem &cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest)
+void Area::encode(ComputeSystem &cs, std::vector<Stimuli> vecStimuli, std::vector<Forest> vecForest)
 {
 	// Overlap Synapses
 	clearNOverlaps(cs);
 
 	for (unsigned int f = 0; f < vecForest.size(); f++)
-		overlapSynapses(cs, vecStimulae[f], vecForest[f]);
+		overlapSynapses(cs, vecStimuli[f], vecForest[f]);
 
 	// Activate (and potentially Inhibit) Neurons
 	clearNStates(cs);
@@ -82,19 +82,19 @@ void Area::encode(ComputeSystem &cs, std::vector<Stimulae> vecStimulae, std::vec
 	}
 }
 
-void Area::learn(ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest)
+void Area::learn(ComputeSystem& cs, std::vector<Stimuli> vecStimuli, std::vector<Forest> vecForest)
 {
 	for (unsigned int f = 0; f < vecForest.size(); f++)
-		learnSynapses(cs, vecStimulae[f], vecForest[f]);
+		learnSynapses(cs, vecStimuli[f], vecForest[f]);
 }
 
-void Area::predict(ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest)
+void Area::predict(ComputeSystem& cs, std::vector<Stimuli> vecStimuli, std::vector<Forest> vecForest)
 {
 	// Overlap Synapses
 	clearNOverlaps(cs);
 
 	for (unsigned int f = 0; f < vecForest.size(); f++)
-		overlapSynapses(cs, vecStimulae[f], vecForest[f]);
+		overlapSynapses(cs, vecStimuli[f], vecForest[f]);
 
 	// Predict Neurons
 	clearNStates(cs);
@@ -104,13 +104,13 @@ void Area::predict(ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::ve
 	predictNeurons(cs);
 }
 
-void Area::decode(ComputeSystem& cs, std::vector<Stimulae> vecStimulae, std::vector<Forest> vecForest)
+void Area::decode(ComputeSystem& cs, std::vector<Stimuli> vecStimuli, std::vector<Forest> vecForest)
 {
 	for (unsigned int f = 0; f < vecForest.size(); f++)
 	{
-		vecStimulae[f].clearStates(cs);
+		vecStimuli[f].clearStates(cs);
 
-		decodeNeurons(cs, vecStimulae[f], vecForest[f]);
+		decodeNeurons(cs, vecStimuli[f], vecForest[f]);
 	}
 }
 
@@ -154,10 +154,10 @@ void Area::clearNInhibit(ComputeSystem& cs)
 	cs.getQueue().enqueueFillBuffer(_bufferInhibit, _ZERO_UCHAR, 0, _numbytesInhibit);
 }
 
-void Area::overlapSynapses(ComputeSystem& cs, Stimulae stimulae, Forest forest)
+void Area::overlapSynapses(ComputeSystem& cs, Stimuli stimuli, Forest forest)
 {
 	_kernelOverlapSynapses.setArg(0, _bufferNOverlaps);
-	_kernelOverlapSynapses.setArg(1, stimulae.bufferSStates);
+	_kernelOverlapSynapses.setArg(1, stimuli.bufferSStates);
 	_kernelOverlapSynapses.setArg(2, forest.bufferSAddrs);
 	_kernelOverlapSynapses.setArg(3, forest.bufferSPerms);
 	_kernelOverlapSynapses.setArg(4, forest.numSpD);
@@ -182,10 +182,10 @@ void Area::activateNeurons(ComputeSystem& cs)
 	cs.getQueue().finish();
 }
 
-void Area::learnSynapses(ComputeSystem&cs, Stimulae stimulae, Forest forest)
+void Area::learnSynapses(ComputeSystem&cs, Stimuli stimuli, Forest forest)
 {
-	_kernelLearnSynapses.setArg(0, stimulae.bufferSStates);
-	_kernelLearnSynapses.setArg(1, stimulae.numS);
+	_kernelLearnSynapses.setArg(0, stimuli.bufferSStates);
+	_kernelLearnSynapses.setArg(1, stimuli.numS);
 	_kernelLearnSynapses.setArg(2, forest.bufferSAddrs);
 	_kernelLearnSynapses.setArg(3, forest.bufferSPerms);
 	_kernelLearnSynapses.setArg(4, forest.numSpD);
@@ -208,9 +208,9 @@ void Area::predictNeurons(ComputeSystem& cs)
 	cs.getQueue().finish();
 }
 
-void Area::decodeNeurons(ComputeSystem& cs, Stimulae stimulae, Forest forest)
+void Area::decodeNeurons(ComputeSystem& cs, Stimuli stimuli, Forest forest)
 {
-	_kernelDecodeNeurons.setArg(0, stimulae.bufferSStates);
+	_kernelDecodeNeurons.setArg(0, stimuli.bufferSStates);
 	_kernelDecodeNeurons.setArg(1, _bufferNStates);
 	_kernelDecodeNeurons.setArg(2, forest.bufferSAddrs);
 	_kernelDecodeNeurons.setArg(3, forest.bufferSPerms);

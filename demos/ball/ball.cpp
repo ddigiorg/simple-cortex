@@ -6,7 +6,7 @@
 #include "compute/compute-system.h"
 #include "compute/compute-program.h"
 #include "utils/render2d.h"
-#include "cortex/stimulae.h"
+#include "cortex/stimuli.h"
 #include "cortex/forest.h"
 #include "cortex/area.h"
 
@@ -58,15 +58,15 @@ int main()
 	cp.loadFromFile(cs, kernels_cl);
 
 	// Setup Simple Cortex Area
-	unsigned int numStimulae = 4;
+	unsigned int numStimuli = 4;
 	unsigned int numForests = 2;
 	unsigned int numNeurons = 1500000; // 1,500,000 reccomended maxumum
 
-	std::vector<Stimulae> vecStimulae(numStimulae);
-	vecStimulae[0].init(cs, numPixels);  // input - current binary scene state
-	vecStimulae[1].init(cs, numNeurons); // input - previous neuron activations
-	vecStimulae[2].init(cs, numNeurons); // input - storage of current neuron activations for forecasting
-	vecStimulae[3].init(cs, numPixels);  // output - predicted future binary scene state
+	std::vector<Stimuli> vecStimuli(numStimuli);
+	vecStimuli[0].init(cs, numPixels);  // input - current binary scene state
+	vecStimuli[1].init(cs, numNeurons); // input - previous neuron activations
+	vecStimuli[2].init(cs, numNeurons); // input - storage of current neuron activations for forecasting
+	vecStimuli[3].init(cs, numPixels);  // output - predicted future binary scene state
 
 	std::vector<Forest> vecForest(numForests);
 	vecForest[0].init(cs, cp, numNeurons, 50, 0.25f);
@@ -157,34 +157,34 @@ int main()
 
 			ball.step();
 
-			vecStimulae[0].setStates(cs, ball.getBinaryVector());
+			vecStimuli[0].setStates(cs, ball.getBinaryVector());
 
 			if (ball.getStartSequence())
-				vecStimulae[1].setStates(cs, vecResetNeurons);
+				vecStimuli[1].setStates(cs, vecResetNeurons);
 
 //			clock.restart();
 
-			area.encode(cs, {vecStimulae[0], vecStimulae[1]}, {vecForest[0], vecForest[1]});
+			area.encode(cs, {vecStimuli[0], vecStimuli[1]}, {vecForest[0], vecForest[1]});
 				// Getting segfaults beyond 1,500,000 neurons (Note: using cl_uint for neuron addressing)
 				// Forest 0: 1.5 mil neurons x 1 dendrite/neuron x 50 synapse/dendrite x 32 bits/synapse = 300 MB per uint address buffer <-- could be this?
 				// Forest 1: 1.5 mil neurons x 1 dendrite/neuron x  1 synapse/dendrite x 32 bits/synapse =   6 MB per uint address buffer
 
 			if (learn)
-				area.learn(cs, {vecStimulae[0], vecStimulae[1]}, {vecForest[0], vecForest[1]});
+				area.learn(cs, {vecStimuli[0], vecStimuli[1]}, {vecForest[0], vecForest[1]});
 
-			vecStimulae[1].setStates(cs, area.getStates(cs));
+			vecStimuli[1].setStates(cs, area.getStates(cs));
 
 			// Forecast 20 time steps into the future
 			if (forecast)
 			{
 				for (unsigned int i = 0; i < 20; i++)
 				{
-					vecStimulae[2].setStates(cs, area.getStates(cs));
+					vecStimuli[2].setStates(cs, area.getStates(cs));
 
-					area.predict(cs, {vecStimulae[2]}, {vecForest[1]});
-					area.decode(cs, {vecStimulae[3]}, {vecForest[0]});
+					area.predict(cs, {vecStimuli[2]}, {vecForest[1]});
+					area.decode(cs, {vecStimuli[3]}, {vecForest[0]});
 
-					std::vector<unsigned char> prediction = vecStimulae[3].getStates(cs);
+					std::vector<unsigned char> prediction = vecStimuli[3].getStates(cs);
 
 					for (unsigned int p = 0; p < numPixels; p++)
 					{
@@ -194,7 +194,7 @@ int main()
 				}
 			}
 
-			std::vector<unsigned char> input = vecStimulae[0].getStates(cs);
+			std::vector<unsigned char> input = vecStimuli[0].getStates(cs);
 
 			/*
 			time = clock.getElapsedTime();

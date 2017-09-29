@@ -1,6 +1,6 @@
-// ==========
-// stimulae.h
-// ==========
+// =========
+// stimuli.h
+// =========
 
 #ifndef STIMULAE_H
 #define STIMULAE_H
@@ -10,7 +10,7 @@
 
 #include <vector>
 
-class Stimulae
+class Stimuli
 {
 public:
 	void init(ComputeSystem& cs, unsigned int numStimulus);
@@ -24,7 +24,7 @@ public:
 	void printStates(ComputeSystem& cs);
 
 public:
-	cl_uint numS; // number of stimulae
+	cl_uint numS; // number of stimuli
 
 	cl::Buffer bufferSStates; // uchars (values from 0 to 1)
 
