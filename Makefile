@@ -13,7 +13,7 @@ OBJS_E = ball.o stimuli.o forest.o area.o compute-system.o compute-program.o
 #OBJS_E = occlude.o stimuli.o forest.o area.o compute-system.o compute-program.o input-image.o
 
 $(EXECUTE): $(OBJS_E)
-	$(CXX) $(LDLIBS) $(OBJS_E) -o $(EXECUTE)
+	$(CXX) $(OBJS_E) $(LDLIBS) -o $(EXECUTE)
 
 # ==========
 # Demo
