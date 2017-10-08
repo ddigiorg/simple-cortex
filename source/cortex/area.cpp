@@ -52,8 +52,8 @@ void Area::encode(ComputeSystem &cs, std::vector<Stimuli> vecStimuli, std::vecto
 	// If no Neuron Inhibition, activate Neuron with highest Boost value
 	if (_inhibit == 0)
 	{
-		cl_uint arrNBoosts[_numNpA];
-		cl_uchar arrNStates[_numNpA];
+		cl_uint *arrNBoosts = new cl_uint[_numNpA];
+		cl_uchar *arrNStates = new cl_uchar[_numNpA];
 
 		cs.getQueue().enqueueReadBuffer(_bufferNBoosts, CL_TRUE, 0, _numbytesNBoosts, &arrNBoosts, NULL);
 		cs.getQueue().enqueueReadBuffer(_bufferNStates, CL_TRUE, 0, _numbytesNStates, &arrNStates, NULL);
@@ -79,6 +79,8 @@ void Area::encode(ComputeSystem &cs, std::vector<Stimuli> vecStimuli, std::vecto
 
 		cs.getQueue().enqueueWriteBuffer(_bufferNBoosts, CL_TRUE, 0, _numbytesNBoosts, arrNBoosts);
 		cs.getQueue().enqueueWriteBuffer(_bufferNStates, CL_TRUE, 0, _numbytesNStates, arrNStates);
+		delete arrNBoosts;
+		delete arrNStates;
 	}
 }
 
