@@ -55,8 +55,8 @@ void Area::encode(ComputeSystem &cs, std::vector<Stimuli> vecStimuli, std::vecto
 		cl_uint *arrNBoosts = new cl_uint[_numNpA];
 		cl_uchar *arrNStates = new cl_uchar[_numNpA];
 
-		cs.getQueue().enqueueReadBuffer(_bufferNBoosts, CL_TRUE, 0, _numbytesNBoosts, &arrNBoosts, NULL);
-		cs.getQueue().enqueueReadBuffer(_bufferNStates, CL_TRUE, 0, _numbytesNStates, &arrNStates, NULL);
+		cs.getQueue().enqueueReadBuffer(_bufferNBoosts, CL_TRUE, 0, _numbytesNBoosts, arrNBoosts, NULL);
+		cs.getQueue().enqueueReadBuffer(_bufferNStates, CL_TRUE, 0, _numbytesNStates, arrNStates, NULL);
 
 		for (unsigned int an = 0; an < _numAN; an++)
 		{
