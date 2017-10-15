@@ -14,10 +14,6 @@ Simple Cortex is a Machine Intelligence neural model based on intelligence princ
 
 ![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/ball-demo.gif)
 
-## Architecture
-
-![alt tag](https://raw.githubusercontent.com/ddigiorg/neuroowl.github.io/master/webpages/technology/simple-cortex/sc.png)
-
 ## Future Improvements
 - Benchmark performance vs. NUPIC, Ogmaneo, and LSTM
 - Optimize the "move synapses" portion of the "learnSynapses" kernel
