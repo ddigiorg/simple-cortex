@@ -60,7 +60,7 @@ int main()
 	// Setup Simple Cortex Area
 	unsigned int numStimuli = 4;
 	unsigned int numForests = 2;
-	unsigned int numNeurons = 1500000; // 1,500,000 reccomended maxumum
+	unsigned int numNeurons = 1500000;
 
 	std::vector<Stimuli> vecStimuli(numStimuli);
 	vecStimuli[0].init(cs, numPixels);  // input - current binary scene state
@@ -165,9 +165,6 @@ int main()
 //			clock.restart();
 
 			area.encode(cs, {vecStimuli[0], vecStimuli[1]}, {vecForest[0], vecForest[1]});
-				// Getting segfaults beyond 1,500,000 neurons (Note: using cl_uint for neuron addressing)
-				// Forest 0: 1.5 mil neurons x 1 dendrite/neuron x 50 synapse/dendrite x 32 bits/synapse = 300 MB per uint address buffer <-- could be this?
-				// Forest 1: 1.5 mil neurons x 1 dendrite/neuron x  1 synapse/dendrite x 32 bits/synapse =   6 MB per uint address buffer
 
 			if (learn)
 				area.learn(cs, {vecStimuli[0], vecStimuli[1]}, {vecForest[0], vecForest[1]});
